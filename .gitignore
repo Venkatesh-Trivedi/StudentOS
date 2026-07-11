@@ -1,32 +1,45 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
+# Dependencies
+node_modules/
 
-# Virtual environments
-.venv/
-venv/
-env/
+# Production build
+dist/
 
-# VS Code
-.vscode/
+# TypeScript and Vite cache
+*.tsbuildinfo
+.vite/
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Environment variables
-.env
+# Test coverage
+coverage/
 
 # Logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Local app data
-data/*.json
+# Environment files
+.env
+.env.local
+.env.*.local
 
-tempCodeRunnerFile.py
+# Local-only files
+*.local
 
-# Build output
-build/
-dist/
-*.spec
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+
+# Other editors
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating system files
+.DS_Store
+Thumbs.db
