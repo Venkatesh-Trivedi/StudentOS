@@ -6,8 +6,14 @@ import {
   saveStudentOSData,
 } from '../data/studentOSStorage'
 import { ChapterScreen } from '../features/chapters/ChapterScreen'
-import { createChapter } from '../features/chapters/chapterService'
-import { createSubject } from '../features/subjects/subjectService'
+import {
+  createChapter,
+  deleteChapter,
+} from '../features/chapters/chapterService'
+import {
+  createSubject,
+  deleteSubject,
+} from '../features/subjects/subjectService'
 import { SubjectsScreen } from '../features/subjects/SubjectsScreen'
 import type { StudentOSData } from '../types/studentOS'
 
@@ -65,6 +71,26 @@ function App() {
     return persistData(nextData)
   }
 
+  function handleDeleteSubject(subjectId: string): string | null {
+    const deletion = deleteSubject(subjectId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
+  function handleDeleteChapter(chapterId: string): string | null {
+    const deletion = deleteChapter(chapterId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
   function persistData(nextData: StudentOSData): string | null {
     const saveResult = saveStudentOSData(nextData)
 
@@ -96,12 +122,15 @@ function App() {
           )}
           onBack={() => setSelectedSubjectId(null)}
           onCreateChapter={handleCreateChapter}
+          onDeleteChapter={handleDeleteChapter}
         />
       ) : (
         <SubjectsScreen
+          chapters={data.chapters}
           subjects={data.subjects}
           onSelectSubject={setSelectedSubjectId}
           onCreateSubject={handleCreateSubject}
+          onDeleteSubject={handleDeleteSubject}
         />
       )}
     </main>

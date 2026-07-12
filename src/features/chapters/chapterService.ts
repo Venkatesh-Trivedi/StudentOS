@@ -1,4 +1,4 @@
-import type { Chapter, Subject } from '../../types/studentOS'
+import type { Chapter, StudentOSData, Subject } from '../../types/studentOS'
 import { validateChapterName } from './chapterValidation'
 
 export type ChapterCreationResult =
@@ -8,6 +8,16 @@ export type ChapterCreationResult =
     }
   | {
       isCreated: false
+      error: string
+    }
+
+export type ChapterDeletionResult =
+  | {
+      isDeleted: true
+      data: StudentOSData
+    }
+  | {
+      isDeleted: false
       error: string
     }
 
@@ -54,6 +64,28 @@ export function createChapter(
       name: validation.normalizedName,
       createdAt: timestamp,
       updatedAt: timestamp,
+    },
+  }
+}
+
+export function deleteChapter(
+  chapterId: string,
+  data: StudentOSData,
+): ChapterDeletionResult {
+  const chapterExists = data.chapters.some((chapter) => chapter.id === chapterId)
+
+  if (!chapterExists) {
+    return {
+      isDeleted: false,
+      error: 'Chapter does not exist',
+    }
+  }
+
+  return {
+    isDeleted: true,
+    data: {
+      ...data,
+      chapters: data.chapters.filter((chapter) => chapter.id !== chapterId),
     },
   }
 }

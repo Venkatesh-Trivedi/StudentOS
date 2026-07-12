@@ -146,6 +146,43 @@ svg {
   box-shadow: 0 2px 0 #0f4f4b;
 }
 
+.button-danger {
+  flex: 0 0 auto;
+  min-height: 38px;
+  border: 1px solid #e9c4bf;
+  padding: 7px 10px;
+  color: #a43c3a;
+  background: #fff7f5;
+  box-shadow: none;
+  font-size: 0.82rem;
+}
+
+.button-danger:hover {
+  color: #8b2c2c;
+  background: #fee9e5;
+}
+
+.button-danger:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.button-secondary {
+  border: 1px solid #c9d9d1;
+  color: #21635e;
+  background: #f2f7f3;
+  box-shadow: none;
+}
+
+.button-secondary:hover {
+  background: #e3eee8;
+}
+
+.button-secondary:active {
+  transform: none;
+  box-shadow: none;
+}
+
 .inline-form {
   margin: 0 0 24px;
   border: 1px solid #d8ded9;
@@ -183,6 +220,13 @@ svg {
 
 .form-error {
   margin: 10px 0 0;
+  color: #ad363d;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.action-error {
+  margin: 16px 0 0;
   color: #ad363d;
   font-size: 0.9rem;
   font-weight: 650;
@@ -248,15 +292,12 @@ svg {
   width: 100%;
   min-height: 64px;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   border: 1px solid #d9dfda;
   border-radius: 16px;
-  padding: 14px 16px;
-  color: #17343c;
+  padding: 7px;
   background: #fffefa;
   box-shadow: 0 4px 14px rgb(39 66 67 / 5%);
-  font-weight: 750;
-  text-align: left;
   transition:
     transform 150ms ease,
     border-color 150ms ease,
@@ -269,9 +310,31 @@ svg {
   box-shadow: 0 9px 18px rgb(39 66 67 / 10%);
 }
 
-.subject-card span:last-child {
+.subject-open-button {
+  display: flex;
+  min-width: 0;
+  min-height: 48px;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 10px;
+  padding: 9px;
+  color: #17343c;
+  background: transparent;
+  font-weight: 750;
+  text-align: left;
+}
+
+.subject-open-button span:last-child {
   color: #1d7971;
   font-size: 0.82rem;
+}
+
+.subject-open-button span:first-child,
+.chapter-list li > span {
+  overflow-wrap: anywhere;
 }
 
 .back-button {
@@ -311,6 +374,11 @@ svg {
   font-weight: 700;
 }
 
+.chapter-list li > span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .chapter-list li::before {
   display: grid;
   width: 27px;
@@ -337,6 +405,49 @@ svg {
 
 .storage-alert p {
   color: inherit;
+}
+
+.confirm-dialog-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(23 52 60 / 48%);
+}
+
+.confirm-dialog {
+  width: min(100%, 420px);
+  border: 1px solid #d8ded9;
+  border-radius: 18px;
+  padding: 22px;
+  background: #fffefa;
+  box-shadow: 0 20px 50px rgb(19 52 60 / 28%);
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.confirm-dialog p {
+  margin: 10px 0 0;
+  color: #5c6969;
+  line-height: 1.55;
+}
+
+.confirm-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.confirm-dialog-actions .button {
+  width: 100%;
 }
 
 @media (min-width: 560px) {

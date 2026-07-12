@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-import type { Subject } from '../../types/studentOS'
+import { ConfirmDialog } from '../../shared/components/ConfirmDialog'
+import type { Chapter, Subject } from '../../types/studentOS'
 
 const SUBJECT_SUGGESTIONS = [
   'Mathematics',
@@ -13,18 +14,32 @@ const SUBJECT_SUGGESTIONS = [
 
 type SubjectsScreenProps = {
   subjects: Subject[]
+  chapters: Chapter[]
   onSelectSubject: (subjectId: string) => void
   onCreateSubject: (name: string) => string | null
+  onDeleteSubject: (subjectId: string) => string | null
 }
 
 export function SubjectsScreen({
   subjects,
+  chapters,
   onSelectSubject,
   onCreateSubject,
+  onDeleteSubject,
 }: SubjectsScreenProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null)
+  const chapterCountToDelete = subjectToDelete
+    ? chapters.filter((chapter) => chapter.subjectId === subjectToDelete.id).length
+    : 0
+  const subjectDeletionMessage = subjectToDelete
+    ? `Delete ${subjectToDelete.name}? This will also delete ${chapterCountToDelete} ${
+        chapterCountToDelete === 1 ? 'chapter' : 'chapters'
+      }.`
+    : ''
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -44,6 +59,15 @@ export function SubjectsScreen({
   function handleSuggestionClick(suggestion: string) {
     setName(suggestion)
     setError(null)
+  }
+
+  function handleConfirmDeleteSubject() {
+    if (!subjectToDelete) {
+      return
+    }
+
+    setActionError(onDeleteSubject(subjectToDelete.id))
+    setSubjectToDelete(null)
   }
 
   return (
@@ -120,19 +144,42 @@ export function SubjectsScreen({
       ) : (
         <ul className="subject-list" aria-label="Subjects">
           {subjects.map((subject) => (
-            <li key={subject.id}>
+            <li className="subject-card" key={subject.id}>
               <button
-                className="subject-card"
+                aria-label={`Open ${subject.name}`}
+                className="subject-open-button"
                 type="button"
                 onClick={() => onSelectSubject(subject.id)}
               >
                 <span>{subject.name}</span>
                 <span aria-hidden="true">Open</span>
               </button>
+              <button
+                aria-label={`Delete ${subject.name}`}
+                className="button button-danger"
+                type="button"
+                onClick={() => setSubjectToDelete(subject)}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      {actionError ? (
+        <p className="action-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
+
+      <ConfirmDialog
+        isOpen={subjectToDelete !== null}
+        message={subjectDeletionMessage}
+        title="Delete subject?"
+        onCancel={() => setSubjectToDelete(null)}
+        onConfirm={handleConfirmDeleteSubject}
+      />
     </section>
   )
 }

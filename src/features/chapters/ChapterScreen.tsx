@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { ConfirmDialog } from '../../shared/components/ConfirmDialog'
 import type { Chapter, Subject } from '../../types/studentOS'
 
 type ChapterScreenProps = {
@@ -7,6 +8,7 @@ type ChapterScreenProps = {
   chapters: Chapter[]
   onBack: () => void
   onCreateChapter: (name: string, subjectId: string) => string | null
+  onDeleteChapter: (chapterId: string) => string | null
 }
 
 export function ChapterScreen({
@@ -14,10 +16,13 @@ export function ChapterScreen({
   chapters,
   onBack,
   onCreateChapter,
+  onDeleteChapter,
 }: ChapterScreenProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null)
   const chapterCountLabel = `${chapters.length} ${
     chapters.length === 1 ? 'chapter' : 'chapters'
   }`
@@ -37,10 +42,19 @@ export function ChapterScreen({
     setIsFormOpen(false)
   }
 
+  function handleConfirmDeleteChapter() {
+    if (!chapterToDelete) {
+      return
+    }
+
+    setActionError(onDeleteChapter(chapterToDelete.id))
+    setChapterToDelete(null)
+  }
+
   return (
     <section className="screen" aria-labelledby="chapters-heading">
       <button className="back-button" type="button" onClick={onBack}>
-        <span aria-hidden="true">←</span> Back to subjects
+        <span aria-hidden="true">&larr;</span> Back to subjects
       </button>
 
       <header className="screen-heading chapter-heading">
@@ -102,10 +116,32 @@ export function ChapterScreen({
           {chapters.map((chapter) => (
             <li key={chapter.id}>
               <span>{chapter.name}</span>
+              <button
+                aria-label={`Delete ${chapter.name}`}
+                className="button button-danger"
+                type="button"
+                onClick={() => setChapterToDelete(chapter)}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ol>
       )}
+
+      {actionError ? (
+        <p className="action-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
+
+      <ConfirmDialog
+        isOpen={chapterToDelete !== null}
+        message={chapterToDelete ? `Delete ${chapterToDelete.name}?` : ''}
+        title="Delete chapter?"
+        onCancel={() => setChapterToDelete(null)}
+        onConfirm={handleConfirmDeleteChapter}
+      />
     </section>
   )
 }
