@@ -21,6 +21,16 @@ export type SubjectDeletionResult =
       error: string
     }
 
+export type SubjectRenameResult =
+  | {
+      isRenamed: true
+      data: StudentOSData
+    }
+  | {
+      isRenamed: false
+      error: string
+    }
+
 export function createSubject(
   name: string,
   existingSubjects: Subject[],
@@ -66,6 +76,58 @@ export function deleteSubject(
       ...data,
       subjects: data.subjects.filter((subject) => subject.id !== subjectId),
       chapters: data.chapters.filter((chapter) => chapter.subjectId !== subjectId),
+      homework: data.homework.filter(
+        (homework) => homework.subjectId !== subjectId,
+      ),
+    },
+  }
+}
+
+export function renameSubject(
+  subjectId: string,
+  name: string,
+  data: StudentOSData,
+): SubjectRenameResult {
+  const subjectToRename = data.subjects.find(
+    (subject) => subject.id === subjectId,
+  )
+
+  if (subjectToRename === undefined) {
+    return {
+      isRenamed: false,
+      error: 'Subject does not exist',
+    }
+  }
+
+  const otherSubjects = data.subjects.filter(
+    (subject) => subject.id !== subjectId,
+  )
+  const validation = validateSubjectName(name, otherSubjects)
+
+  if (!validation.isValid) {
+    return {
+      isRenamed: false,
+      error: validation.error,
+    }
+  }
+
+  const timestamp = new Date().toISOString()
+
+  return {
+    isRenamed: true,
+    data: {
+      ...data,
+      subjects: data.subjects.map((subject) => {
+        if (subject.id !== subjectId) {
+          return subject
+        }
+
+        return {
+          ...subject,
+          name: validation.normalizedName,
+          updatedAt: timestamp,
+        }
+      }),
     },
   }
 }

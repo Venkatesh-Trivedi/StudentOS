@@ -21,6 +21,16 @@ export type ChapterDeletionResult =
       error: string
     }
 
+export type ChapterRenameResult =
+  | {
+      isRenamed: true
+      data: StudentOSData
+    }
+  | {
+      isRenamed: false
+      error: string
+    }
+
 export function createChapter(
   name: string,
   subjectId: string,
@@ -86,6 +96,69 @@ export function deleteChapter(
     data: {
       ...data,
       chapters: data.chapters.filter((chapter) => chapter.id !== chapterId),
+      homework: data.homework.map((homework) => {
+        if (homework.chapterId !== chapterId) {
+          return homework
+        }
+
+        return {
+          ...homework,
+          chapterId: null,
+        }
+      }),
+    },
+  }
+}
+
+export function renameChapter(
+  chapterId: string,
+  name: string,
+  data: StudentOSData,
+): ChapterRenameResult {
+  const chapterToRename = data.chapters.find(
+    (chapter) => chapter.id === chapterId,
+  )
+
+  if (chapterToRename === undefined) {
+    return {
+      isRenamed: false,
+      error: 'Chapter does not exist',
+    }
+  }
+
+  const otherChapters = data.chapters.filter(
+    (chapter) => chapter.id !== chapterId,
+  )
+  const validation = validateChapterName(
+    name,
+    chapterToRename.subjectId,
+    otherChapters,
+  )
+
+  if (!validation.isValid) {
+    return {
+      isRenamed: false,
+      error: validation.error,
+    }
+  }
+
+  const timestamp = new Date().toISOString()
+
+  return {
+    isRenamed: true,
+    data: {
+      ...data,
+      chapters: data.chapters.map((chapter) => {
+        if (chapter.id !== chapterId) {
+          return chapter
+        }
+
+        return {
+          ...chapter,
+          name: validation.normalizedName,
+          updatedAt: timestamp,
+        }
+      }),
     },
   }
 }

@@ -1,4 +1,9 @@
-import type { Chapter, StudentOSData, Subject } from '../types/studentOS'
+import type {
+  Chapter,
+  Homework,
+  StudentOSData,
+  Subject,
+} from '../types/studentOS'
 
 export const STUDENT_OS_STORAGE_KEY = 'studentos:data'
 
@@ -31,9 +36,10 @@ export type StudentOSDataSaveResult =
 
 export function createEmptyStudentOSData(): StudentOSData {
   return {
-    version: 1,
+    version: 2,
     subjects: [],
     chapters: [],
+    homework: [],
   }
 }
 
@@ -78,16 +84,35 @@ export function loadStudentOSData(
     }
   }
 
-  if (!isStudentOSData(parsedData)) {
+  if (isStudentOSDataVersion1(parsedData)) {
+    return {
+      isSuccess: true,
+      data: migrateStudentOSDataVersion1(parsedData),
+    }
+  }
+
+  if (isStudentOSData(parsedData)) {
+    return {
+      isSuccess: true,
+      data: parsedData,
+    }
+  }
+
+  if (
+    isRecord(parsedData) &&
+    typeof parsedData.version === 'number' &&
+    parsedData.version !== 1 &&
+    parsedData.version !== 2
+  ) {
     return {
       isSuccess: false,
-      error: 'Stored StudentOS data has an invalid structure',
+      error: 'Stored StudentOS data uses an unsupported version',
     }
   }
 
   return {
-    isSuccess: true,
-    data: parsedData,
+    isSuccess: false,
+    error: 'Stored StudentOS data has an invalid structure',
   }
 }
 
@@ -136,12 +161,44 @@ function getDefaultStorage(): Storage | null {
 function isStudentOSData(value: unknown): value is StudentOSData {
   return (
     isRecord(value) &&
+    value.version === 2 &&
+    Array.isArray(value.subjects) &&
+    value.subjects.every(isSubject) &&
+    Array.isArray(value.chapters) &&
+    value.chapters.every(isChapter) &&
+    Array.isArray(value.homework) &&
+    value.homework.every(isHomework)
+  )
+}
+
+type StudentOSDataVersion1 = {
+  version: 1
+  subjects: Subject[]
+  chapters: Chapter[]
+}
+
+function isStudentOSDataVersion1(
+  value: unknown,
+): value is StudentOSDataVersion1 {
+  return (
+    isRecord(value) &&
     value.version === 1 &&
     Array.isArray(value.subjects) &&
     value.subjects.every(isSubject) &&
     Array.isArray(value.chapters) &&
     value.chapters.every(isChapter)
   )
+}
+
+function migrateStudentOSDataVersion1(
+  data: StudentOSDataVersion1,
+): StudentOSData {
+  return {
+    version: 2,
+    subjects: [...data.subjects],
+    chapters: [...data.chapters],
+    homework: [],
+  }
 }
 
 function isSubject(value: unknown): value is Subject {
@@ -160,6 +217,21 @@ function isChapter(value: unknown): value is Chapter {
     isString(value.id) &&
     isString(value.subjectId) &&
     isString(value.name) &&
+    isString(value.createdAt) &&
+    isString(value.updatedAt)
+  )
+}
+
+function isHomework(value: unknown): value is Homework {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.subjectId) &&
+    (isString(value.chapterId) || value.chapterId === null) &&
+    isString(value.title) &&
+    isString(value.dueDate) &&
+    typeof value.isCompleted === 'boolean' &&
+    (isString(value.completedAt) || value.completedAt === null) &&
     isString(value.createdAt) &&
     isString(value.updatedAt)
   )

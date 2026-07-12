@@ -41,7 +41,8 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid #f2a541;
   outline-offset: 3px;
 }
@@ -63,6 +64,37 @@ svg {
   padding: 24px 16px 40px;
 }
 
+.app-navigation {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border: 1px solid #d4ddd8;
+  border-radius: 14px;
+  padding: 4px;
+  background: rgb(255 254 250 / 82%);
+}
+
+.app-navigation-link {
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  padding: 7px 13px;
+  color: #526662;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.app-navigation-link:hover {
+  color: #155e59;
+  background: #edf5f0;
+}
+
+.app-navigation-link[aria-current='page'] {
+  color: #fff;
+  background: #176c67;
+}
+
 .screen {
   padding: 16px 0;
 }
@@ -82,6 +114,7 @@ svg {
   font-size: clamp(2.35rem, 11vw, 4.25rem);
   line-height: 0.94;
   letter-spacing: -0.065em;
+  overflow-wrap: anywhere;
 }
 
 .screen-heading h2 {
@@ -183,6 +216,12 @@ svg {
   box-shadow: none;
 }
 
+.button-compact {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+}
+
 .inline-form {
   margin: 0 0 24px;
   border: 1px solid #d8ded9;
@@ -230,6 +269,43 @@ svg {
   color: #ad363d;
   font-size: 0.9rem;
   font-weight: 650;
+}
+
+.row-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.row-edit-form {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+  padding: 4px;
+}
+
+.row-edit-form label {
+  color: #4d6260;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.row-edit-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #aebeb7;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #20343a;
+  background: #fff;
+}
+
+.row-edit-form .form-error {
+  margin-top: 0;
 }
 
 .suggestions {
@@ -292,6 +368,7 @@ svg {
   width: 100%;
   min-height: 64px;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   border: 1px solid #d9dfda;
   border-radius: 16px;
@@ -366,6 +443,7 @@ svg {
   display: flex;
   min-height: 58px;
   align-items: center;
+  flex-wrap: wrap;
   gap: 13px;
   border: 1px solid #d9dfda;
   border-radius: 14px;
@@ -431,12 +509,14 @@ svg {
   color: #17343c;
   font-size: 1.35rem;
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 
 .confirm-dialog p {
   margin: 10px 0 0;
   color: #5c6969;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .confirm-dialog-actions {
@@ -450,6 +530,163 @@ svg {
   width: 100%;
 }
 
+.homework-form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.homework-form-field {
+  min-width: 0;
+}
+
+.homework-form-field input,
+.homework-form-field select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #b9c6c0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #20343a;
+  background: #fff;
+}
+
+.homework-form-field select:disabled {
+  color: #798480;
+  background: #f1f2ee;
+  cursor: not-allowed;
+}
+
+.homework-form-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.homework-empty-state h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.1rem;
+}
+
+.homework-groups {
+  display: grid;
+  gap: 26px;
+}
+
+.homework-group-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.homework-group-heading h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.08rem;
+}
+
+.homework-group-heading span {
+  color: #71807c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.homework-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.homework-item {
+  display: grid;
+  min-width: 0;
+  grid-template-areas:
+    'completion actions'
+    'content content';
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  border: 1px solid #d9dfda;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fffefa;
+  box-shadow: 0 4px 14px rgb(39 66 67 / 5%);
+}
+
+.homework-completion {
+  display: inline-flex;
+  min-width: 0;
+  grid-area: completion;
+  align-items: center;
+  gap: 8px;
+  color: #286861;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.homework-completion input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: #176c67;
+}
+
+.homework-item-content {
+  min-width: 0;
+  grid-area: content;
+}
+
+.homework-item-title {
+  margin: 0;
+  color: #17343c;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.homework-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 7px 0 0;
+  color: #596b68;
+  font-size: 0.82rem;
+}
+
+.homework-item-meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.homework-item-due {
+  margin: 6px 0 0;
+  color: #7a5540;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.homework-item-actions {
+  grid-area: actions;
+}
+
+.homework-item-completed {
+  border-color: #e0e3df;
+  background: #f4f4ef;
+  box-shadow: none;
+}
+
+.homework-item-completed .homework-item-title {
+  color: #65716f;
+  text-decoration: line-through;
+}
+
+.homework-item-completed .homework-item-meta,
+.homework-item-completed .homework-item-due,
+.homework-item-completed .homework-completion {
+  color: #75817e;
+}
+
 @media (min-width: 560px) {
   .app-shell {
     padding: 40px 28px 56px;
@@ -461,5 +698,29 @@ svg {
 
   .form-actions .button {
     white-space: nowrap;
+  }
+
+  .row-edit-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .row-edit-form label,
+  .row-edit-form .form-error {
+    grid-column: 1 / -1;
+  }
+
+  .homework-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .homework-title-field {
+    grid-column: 1 / -1;
+  }
+
+  .homework-item {
+    grid-template-areas: 'completion content actions';
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
   }
 }

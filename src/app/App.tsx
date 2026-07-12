@@ -9,10 +9,19 @@ import { ChapterScreen } from '../features/chapters/ChapterScreen'
 import {
   createChapter,
   deleteChapter,
+  renameChapter,
 } from '../features/chapters/chapterService'
+import { HomeworkScreen } from '../features/homework/HomeworkScreen'
+import {
+  createHomework,
+  deleteHomework,
+  toggleHomeworkCompletion,
+  type HomeworkCreationInput,
+} from '../features/homework/homeworkService'
 import {
   createSubject,
   deleteSubject,
+  renameSubject,
 } from '../features/subjects/subjectService'
 import { SubjectsScreen } from '../features/subjects/SubjectsScreen'
 import type { StudentOSData } from '../types/studentOS'
@@ -20,7 +29,10 @@ import type { StudentOSData } from '../types/studentOS'
 type AppStartupState = {
   data: StudentOSData
   storageError: string | null
+  canPersist: boolean
 }
+
+type AppView = 'subjects' | 'homework'
 
 function App() {
   const [startupState] = useState<AppStartupState>(loadAppStartupState)
@@ -28,6 +40,7 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
     null,
   )
+  const [activeView, setActiveView] = useState<AppView>('subjects')
   const [storageError, setStorageError] = useState<string | null>(
     startupState.storageError,
   )
@@ -91,7 +104,75 @@ function App() {
     return persistData(deletion.data)
   }
 
+  function handleRenameSubject(subjectId: string, name: string): string | null {
+    const renaming = renameSubject(subjectId, name, data)
+
+    if (!renaming.isRenamed) {
+      return renaming.error
+    }
+
+    return persistData(renaming.data)
+  }
+
+  function handleRenameChapter(chapterId: string, name: string): string | null {
+    const renaming = renameChapter(chapterId, name, data)
+
+    if (!renaming.isRenamed) {
+      return renaming.error
+    }
+
+    return persistData(renaming.data)
+  }
+
+  function handleCreateHomework(input: HomeworkCreationInput): string | null {
+    const creation = createHomework(input, data)
+
+    if (!creation.isCreated) {
+      return creation.error
+    }
+
+    const nextData: StudentOSData = {
+      ...data,
+      homework: [...data.homework, creation.homework],
+    }
+
+    return persistData(nextData)
+  }
+
+  function handleToggleHomework(homeworkId: string): string | null {
+    const toggling = toggleHomeworkCompletion(homeworkId, data)
+
+    if (!toggling.isToggled) {
+      return toggling.error
+    }
+
+    return persistData(toggling.data)
+  }
+
+  function handleDeleteHomework(homeworkId: string): string | null {
+    const deletion = deleteHomework(homeworkId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
+  function handleNavigate(view: AppView) {
+    setActiveView(view)
+    setSelectedSubjectId(null)
+  }
+
   function persistData(nextData: StudentOSData): string | null {
+    if (!startupState.canPersist) {
+      const error =
+        startupState.storageError ?? 'StudentOS data could not be loaded safely'
+
+      setStorageError(error)
+      return error
+    }
+
     const saveResult = saveStudentOSData(nextData)
 
     if (!saveResult.isSuccess) {
@@ -107,6 +188,25 @@ function App() {
 
   return (
     <main className="app-shell">
+      <nav className="app-navigation" aria-label="Primary navigation">
+        <button
+          aria-current={activeView === 'subjects' ? 'page' : undefined}
+          className="app-navigation-link"
+          type="button"
+          onClick={() => handleNavigate('subjects')}
+        >
+          Subjects
+        </button>
+        <button
+          aria-current={activeView === 'homework' ? 'page' : undefined}
+          className="app-navigation-link"
+          type="button"
+          onClick={() => handleNavigate('homework')}
+        >
+          Homework
+        </button>
+      </nav>
+
       {storageError ? (
         <div className="storage-alert" role="alert">
           <strong>Storage needs attention</strong>
@@ -114,7 +214,16 @@ function App() {
         </div>
       ) : null}
 
-      {selectedSubject ? (
+      {activeView === 'homework' ? (
+        <HomeworkScreen
+          chapters={data.chapters}
+          homework={data.homework}
+          subjects={data.subjects}
+          onCreateHomework={handleCreateHomework}
+          onDeleteHomework={handleDeleteHomework}
+          onToggleHomework={handleToggleHomework}
+        />
+      ) : selectedSubject ? (
         <ChapterScreen
           subject={selectedSubject}
           chapters={data.chapters.filter(
@@ -123,6 +232,7 @@ function App() {
           onBack={() => setSelectedSubjectId(null)}
           onCreateChapter={handleCreateChapter}
           onDeleteChapter={handleDeleteChapter}
+          onRenameChapter={handleRenameChapter}
         />
       ) : (
         <SubjectsScreen
@@ -131,6 +241,7 @@ function App() {
           onSelectSubject={setSelectedSubjectId}
           onCreateSubject={handleCreateSubject}
           onDeleteSubject={handleDeleteSubject}
+          onRenameSubject={handleRenameSubject}
         />
       )}
     </main>
@@ -144,12 +255,14 @@ function loadAppStartupState(): AppStartupState {
     return {
       data: loadResult.data,
       storageError: null,
+      canPersist: true,
     }
   }
 
   return {
     data: createEmptyStudentOSData(),
-    storageError: loadResult.error,
+    storageError: `${loadResult.error}. Existing stored data has been left unchanged.`,
+    canPersist: false,
   }
 }
 

@@ -8,6 +8,7 @@ type ChapterScreenProps = {
   chapters: Chapter[]
   onBack: () => void
   onCreateChapter: (name: string, subjectId: string) => string | null
+  onRenameChapter: (chapterId: string, name: string) => string | null
   onDeleteChapter: (chapterId: string) => string | null
 }
 
@@ -16,12 +17,18 @@ export function ChapterScreen({
   chapters,
   onBack,
   onCreateChapter,
+  onRenameChapter,
   onDeleteChapter,
 }: ChapterScreenProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [chapterBeingRenamed, setChapterBeingRenamed] = useState<string | null>(
+    null,
+  )
+  const [renamedChapterName, setRenamedChapterName] = useState('')
+  const [renameError, setRenameError] = useState<string | null>(null)
   const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null)
   const chapterCountLabel = `${chapters.length} ${
     chapters.length === 1 ? 'chapter' : 'chapters'
@@ -49,6 +56,34 @@ export function ChapterScreen({
 
     setActionError(onDeleteChapter(chapterToDelete.id))
     setChapterToDelete(null)
+  }
+
+  function startRenamingChapter(chapter: Chapter) {
+    setChapterBeingRenamed(chapter.id)
+    setRenamedChapterName(chapter.name)
+    setRenameError(null)
+  }
+
+  function cancelRenamingChapter() {
+    setChapterBeingRenamed(null)
+    setRenamedChapterName('')
+    setRenameError(null)
+  }
+
+  function handleRenameChapter(
+    event: React.FormEvent<HTMLFormElement>,
+    chapterId: string,
+  ) {
+    event.preventDefault()
+
+    const renameChapterError = onRenameChapter(chapterId, renamedChapterName)
+
+    if (renameChapterError) {
+      setRenameError(renameChapterError)
+      return
+    }
+
+    cancelRenamingChapter()
   }
 
   return (
@@ -115,15 +150,80 @@ export function ChapterScreen({
         <ol className="chapter-list">
           {chapters.map((chapter) => (
             <li key={chapter.id}>
-              <span>{chapter.name}</span>
-              <button
-                aria-label={`Delete ${chapter.name}`}
-                className="button button-danger"
-                type="button"
-                onClick={() => setChapterToDelete(chapter)}
-              >
-                Delete
-              </button>
+              {chapterBeingRenamed === chapter.id ? (
+                <form
+                  aria-label={`Rename ${chapter.name}`}
+                  className="row-edit-form"
+                  onSubmit={(event) => handleRenameChapter(event, chapter.id)}
+                >
+                  <label htmlFor={`rename-chapter-${chapter.id}`}>
+                    Chapter name
+                  </label>
+                  <input
+                    aria-describedby={
+                      renameError
+                        ? `rename-chapter-${chapter.id}-error`
+                        : undefined
+                    }
+                    autoFocus
+                    className="row-edit-input"
+                    id={`rename-chapter-${chapter.id}`}
+                    maxLength={100}
+                    onChange={(event) => {
+                      setRenamedChapterName(event.target.value)
+                      setRenameError(null)
+                    }}
+                    type="text"
+                    value={renamedChapterName}
+                  />
+                  <div className="row-actions">
+                    <button
+                      className="button button-primary button-compact"
+                      type="submit"
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="button button-secondary button-compact"
+                      type="button"
+                      onClick={cancelRenamingChapter}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {renameError ? (
+                    <p
+                      className="form-error"
+                      id={`rename-chapter-${chapter.id}-error`}
+                      role="alert"
+                    >
+                      {renameError}
+                    </p>
+                  ) : null}
+                </form>
+              ) : (
+                <>
+                  <span>{chapter.name}</span>
+                  <div className="row-actions">
+                    <button
+                      aria-label={`Rename ${chapter.name}`}
+                      className="button button-secondary button-compact"
+                      type="button"
+                      onClick={() => startRenamingChapter(chapter)}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      aria-label={`Delete ${chapter.name}`}
+                      className="button button-danger button-compact"
+                      type="button"
+                      onClick={() => setChapterToDelete(chapter)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ol>

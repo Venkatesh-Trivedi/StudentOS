@@ -17,6 +17,7 @@ type SubjectsScreenProps = {
   chapters: Chapter[]
   onSelectSubject: (subjectId: string) => void
   onCreateSubject: (name: string) => string | null
+  onRenameSubject: (subjectId: string, name: string) => string | null
   onDeleteSubject: (subjectId: string) => string | null
 }
 
@@ -25,12 +26,18 @@ export function SubjectsScreen({
   chapters,
   onSelectSubject,
   onCreateSubject,
+  onRenameSubject,
   onDeleteSubject,
 }: SubjectsScreenProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [subjectBeingRenamed, setSubjectBeingRenamed] = useState<string | null>(
+    null,
+  )
+  const [renamedSubjectName, setRenamedSubjectName] = useState('')
+  const [renameError, setRenameError] = useState<string | null>(null)
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null)
   const chapterCountToDelete = subjectToDelete
     ? chapters.filter((chapter) => chapter.subjectId === subjectToDelete.id).length
@@ -59,6 +66,34 @@ export function SubjectsScreen({
   function handleSuggestionClick(suggestion: string) {
     setName(suggestion)
     setError(null)
+  }
+
+  function startRenamingSubject(subject: Subject) {
+    setSubjectBeingRenamed(subject.id)
+    setRenamedSubjectName(subject.name)
+    setRenameError(null)
+  }
+
+  function cancelRenamingSubject() {
+    setSubjectBeingRenamed(null)
+    setRenamedSubjectName('')
+    setRenameError(null)
+  }
+
+  function handleRenameSubject(
+    event: React.FormEvent<HTMLFormElement>,
+    subjectId: string,
+  ) {
+    event.preventDefault()
+
+    const renameSubjectError = onRenameSubject(subjectId, renamedSubjectName)
+
+    if (renameSubjectError) {
+      setRenameError(renameSubjectError)
+      return
+    }
+
+    cancelRenamingSubject()
   }
 
   function handleConfirmDeleteSubject() {
@@ -145,23 +180,88 @@ export function SubjectsScreen({
         <ul className="subject-list" aria-label="Subjects">
           {subjects.map((subject) => (
             <li className="subject-card" key={subject.id}>
-              <button
-                aria-label={`Open ${subject.name}`}
-                className="subject-open-button"
-                type="button"
-                onClick={() => onSelectSubject(subject.id)}
-              >
-                <span>{subject.name}</span>
-                <span aria-hidden="true">Open</span>
-              </button>
-              <button
-                aria-label={`Delete ${subject.name}`}
-                className="button button-danger"
-                type="button"
-                onClick={() => setSubjectToDelete(subject)}
-              >
-                Delete
-              </button>
+              {subjectBeingRenamed === subject.id ? (
+                <form
+                  aria-label={`Rename ${subject.name}`}
+                  className="row-edit-form"
+                  onSubmit={(event) => handleRenameSubject(event, subject.id)}
+                >
+                  <label htmlFor={`rename-subject-${subject.id}`}>
+                    Subject name
+                  </label>
+                  <input
+                    aria-describedby={
+                      renameError
+                        ? `rename-subject-${subject.id}-error`
+                        : undefined
+                    }
+                    autoFocus
+                    className="row-edit-input"
+                    id={`rename-subject-${subject.id}`}
+                    maxLength={60}
+                    onChange={(event) => {
+                      setRenamedSubjectName(event.target.value)
+                      setRenameError(null)
+                    }}
+                    type="text"
+                    value={renamedSubjectName}
+                  />
+                  <div className="row-actions">
+                    <button
+                      className="button button-primary button-compact"
+                      type="submit"
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="button button-secondary button-compact"
+                      type="button"
+                      onClick={cancelRenamingSubject}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {renameError ? (
+                    <p
+                      className="form-error"
+                      id={`rename-subject-${subject.id}-error`}
+                      role="alert"
+                    >
+                      {renameError}
+                    </p>
+                  ) : null}
+                </form>
+              ) : (
+                <>
+                  <button
+                    aria-label={`Open ${subject.name}`}
+                    className="subject-open-button"
+                    type="button"
+                    onClick={() => onSelectSubject(subject.id)}
+                  >
+                    <span>{subject.name}</span>
+                    <span aria-hidden="true">Open</span>
+                  </button>
+                  <div className="row-actions">
+                    <button
+                      aria-label={`Rename ${subject.name}`}
+                      className="button button-secondary button-compact"
+                      type="button"
+                      onClick={() => startRenamingSubject(subject)}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      aria-label={`Delete ${subject.name}`}
+                      className="button button-danger button-compact"
+                      type="button"
+                      onClick={() => setSubjectToDelete(subject)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ul>
