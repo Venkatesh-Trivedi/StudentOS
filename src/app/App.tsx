@@ -35,6 +35,7 @@ import {
   renameSubject,
 } from '../features/subjects/subjectService'
 import { SubjectsScreen } from '../features/subjects/SubjectsScreen'
+import { TodayScreen } from '../features/today/TodayScreen'
 import type { StudentOSData } from '../types/studentOS'
 
 type AppStartupState = {
@@ -43,7 +44,7 @@ type AppStartupState = {
   canPersist: boolean
 }
 
-type AppView = 'subjects' | 'homework' | 'exams'
+type AppView = 'today' | 'subjects' | 'homework' | 'exams'
 
 function App() {
   const [startupState] = useState<AppStartupState>(loadAppStartupState)
@@ -51,7 +52,7 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
     null,
   )
-  const [activeView, setActiveView] = useState<AppView>('subjects')
+  const [activeView, setActiveView] = useState<AppView>('today')
   const [storageError, setStorageError] = useState<string | null>(
     startupState.storageError,
   )
@@ -264,6 +265,14 @@ function App() {
     <main className="app-shell">
       <nav className="app-navigation" aria-label="Primary navigation">
         <button
+          aria-current={activeView === 'today' ? 'page' : undefined}
+          className="app-navigation-link"
+          type="button"
+          onClick={() => handleNavigate('today')}
+        >
+          Today
+        </button>
+        <button
           aria-current={activeView === 'subjects' ? 'page' : undefined}
           className="app-navigation-link"
           type="button"
@@ -296,7 +305,13 @@ function App() {
         </div>
       ) : null}
 
-      {activeView === 'exams' ? (
+      {activeView === 'today' ? (
+        <TodayScreen
+          data={data}
+          onToggleHomework={handleToggleHomework}
+          onViewExams={() => handleNavigate('exams')}
+        />
+      ) : activeView === 'exams' ? (
         <ExamsScreen
           chapters={data.chapters}
           exams={data.exams}
