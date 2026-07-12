@@ -12,3 +12,9 @@ export type Chapter = {
   createdAt: string
   updatedAt: string
 }
+
+export type StudentOSData = {
+  version: 1
+  subjects: Subject[]
+  chapters: Chapter[]
+}
