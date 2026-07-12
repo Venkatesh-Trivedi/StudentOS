@@ -1,5 +1,8 @@
 import type {
   Chapter,
+  Exam,
+  ExamSeries,
+  ExamSubjectScope,
   Homework,
   StudentOSData,
   Subject,
@@ -36,10 +39,12 @@ export type StudentOSDataSaveResult =
 
 export function createEmptyStudentOSData(): StudentOSData {
   return {
-    version: 2,
+    version: 4,
     subjects: [],
     chapters: [],
     homework: [],
+    examSeries: [],
+    exams: [],
   }
 }
 
@@ -85,9 +90,28 @@ export function loadStudentOSData(
   }
 
   if (isStudentOSDataVersion1(parsedData)) {
+    const version2Data = migrateStudentOSDataVersion1(parsedData)
+    const version3Data = migrateStudentOSDataVersion2(version2Data)
+
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion1(parsedData),
+      data: migrateStudentOSDataVersion3(version3Data),
+    }
+  }
+
+  if (isStudentOSDataVersion2(parsedData)) {
+    return {
+      isSuccess: true,
+      data: migrateStudentOSDataVersion3(
+        migrateStudentOSDataVersion2(parsedData),
+      ),
+    }
+  }
+
+  if (isStudentOSDataVersion3(parsedData)) {
+    return {
+      isSuccess: true,
+      data: migrateStudentOSDataVersion3(parsedData),
     }
   }
 
@@ -102,7 +126,9 @@ export function loadStudentOSData(
     isRecord(parsedData) &&
     typeof parsedData.version === 'number' &&
     parsedData.version !== 1 &&
-    parsedData.version !== 2
+    parsedData.version !== 2 &&
+    parsedData.version !== 3 &&
+    parsedData.version !== 4
   ) {
     return {
       isSuccess: false,
@@ -161,13 +187,17 @@ function getDefaultStorage(): Storage | null {
 function isStudentOSData(value: unknown): value is StudentOSData {
   return (
     isRecord(value) &&
-    value.version === 2 &&
+    value.version === 4 &&
     Array.isArray(value.subjects) &&
     value.subjects.every(isSubject) &&
     Array.isArray(value.chapters) &&
     value.chapters.every(isChapter) &&
     Array.isArray(value.homework) &&
-    value.homework.every(isHomework)
+    value.homework.every(isHomework) &&
+    Array.isArray(value.examSeries) &&
+    value.examSeries.every(isExamSeries) &&
+    Array.isArray(value.exams) &&
+    value.exams.every(isExam)
   )
 }
 
@@ -175,6 +205,37 @@ type StudentOSDataVersion1 = {
   version: 1
   subjects: Subject[]
   chapters: Chapter[]
+}
+
+type StudentOSDataVersion2 = {
+  version: 2
+  subjects: Subject[]
+  chapters: Chapter[]
+  homework: Homework[]
+}
+
+type ExamSubjectScopeVersion3 = {
+  subjectId: string
+  chapterIds: string[] | null
+}
+
+type ExamVersion3 = {
+  id: string
+  seriesId: string | null
+  title: string
+  examDate: string
+  subjectScopes: ExamSubjectScopeVersion3[]
+  createdAt: string
+  updatedAt: string
+}
+
+type StudentOSDataVersion3 = {
+  version: 3
+  subjects: Subject[]
+  chapters: Chapter[]
+  homework: Homework[]
+  examSeries: ExamSeries[]
+  exams: ExamVersion3[]
 }
 
 function isStudentOSDataVersion1(
@@ -192,12 +253,84 @@ function isStudentOSDataVersion1(
 
 function migrateStudentOSDataVersion1(
   data: StudentOSDataVersion1,
-): StudentOSData {
+): StudentOSDataVersion2 {
   return {
     version: 2,
     subjects: [...data.subjects],
     chapters: [...data.chapters],
     homework: [],
+  }
+}
+
+function isStudentOSDataVersion2(
+  value: unknown,
+): value is StudentOSDataVersion2 {
+  return (
+    isRecord(value) &&
+    value.version === 2 &&
+    Array.isArray(value.subjects) &&
+    value.subjects.every(isSubject) &&
+    Array.isArray(value.chapters) &&
+    value.chapters.every(isChapter) &&
+    Array.isArray(value.homework) &&
+    value.homework.every(isHomework)
+  )
+}
+
+function migrateStudentOSDataVersion2(
+  data: StudentOSDataVersion2,
+): StudentOSDataVersion3 {
+  return {
+    version: 3,
+    subjects: [...data.subjects],
+    chapters: [...data.chapters],
+    homework: [...data.homework],
+    examSeries: [],
+    exams: [],
+  }
+}
+
+function isStudentOSDataVersion3(
+  value: unknown,
+): value is StudentOSDataVersion3 {
+  return (
+    isRecord(value) &&
+    value.version === 3 &&
+    Array.isArray(value.subjects) &&
+    value.subjects.every(isSubject) &&
+    Array.isArray(value.chapters) &&
+    value.chapters.every(isChapter) &&
+    Array.isArray(value.homework) &&
+    value.homework.every(isHomework) &&
+    Array.isArray(value.examSeries) &&
+    value.examSeries.every(isExamSeries) &&
+    Array.isArray(value.exams) &&
+    value.exams.every(isExamVersion3)
+  )
+}
+
+function migrateStudentOSDataVersion3(
+  data: StudentOSDataVersion3,
+): StudentOSData {
+  return {
+    version: 4,
+    subjects: [...data.subjects],
+    chapters: [...data.chapters],
+    homework: [...data.homework],
+    examSeries: [...data.examSeries],
+    exams: data.exams.map((exam) => ({
+      ...exam,
+      subjectScopes: exam.subjectScopes.map((scope) => ({
+        subjectId: scope.subjectId,
+        scopeType: scope.chapterIds === null ? 'entire' : 'specific',
+        chapterIds:
+          scope.chapterIds === null
+            ? data.chapters
+                .filter((chapter) => chapter.subjectId === scope.subjectId)
+                .map((chapter) => chapter.id)
+            : [...scope.chapterIds],
+      })),
+    })),
   }
 }
 
@@ -234,6 +367,70 @@ function isHomework(value: unknown): value is Homework {
     (isString(value.completedAt) || value.completedAt === null) &&
     isString(value.createdAt) &&
     isString(value.updatedAt)
+  )
+}
+
+function isExamSeries(value: unknown): value is ExamSeries {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.title) &&
+    isString(value.createdAt) &&
+    isString(value.updatedAt)
+  )
+}
+
+function isExam(value: unknown): value is Exam {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    (isString(value.seriesId) || value.seriesId === null) &&
+    isString(value.title) &&
+    isString(value.examDate) &&
+    Array.isArray(value.subjectScopes) &&
+    value.subjectScopes.length > 0 &&
+    value.subjectScopes.every(isExamSubjectScope) &&
+    isString(value.createdAt) &&
+    isString(value.updatedAt)
+  )
+}
+
+function isExamVersion3(value: unknown): value is ExamVersion3 {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    (isString(value.seriesId) || value.seriesId === null) &&
+    isString(value.title) &&
+    isString(value.examDate) &&
+    Array.isArray(value.subjectScopes) &&
+    value.subjectScopes.length > 0 &&
+    value.subjectScopes.every(isExamSubjectScopeVersion3) &&
+    isString(value.createdAt) &&
+    isString(value.updatedAt)
+  )
+}
+
+function isExamSubjectScope(value: unknown): value is ExamSubjectScope {
+  return (
+    isRecord(value) &&
+    isString(value.subjectId) &&
+    (value.scopeType === 'entire' || value.scopeType === 'specific') &&
+    Array.isArray(value.chapterIds) &&
+    value.chapterIds.every(isString) &&
+    (value.scopeType === 'entire' || value.chapterIds.length > 0)
+  )
+}
+
+function isExamSubjectScopeVersion3(
+  value: unknown,
+): value is ExamSubjectScopeVersion3 {
+  return (
+    isRecord(value) &&
+    isString(value.subjectId) &&
+    (value.chapterIds === null ||
+      (Array.isArray(value.chapterIds) &&
+        value.chapterIds.length > 0 &&
+        value.chapterIds.every(isString)))
   )
 }
 

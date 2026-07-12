@@ -91,6 +91,44 @@ export function deleteChapter(
     }
   }
 
+  const exams = data.exams.flatMap((exam) => {
+    let isExamAffected = false
+    const subjectScopes = exam.subjectScopes.flatMap((scope) => {
+      if (!scope.chapterIds.includes(chapterId)) {
+        return [scope]
+      }
+
+      isExamAffected = true
+      const chapterIds = scope.chapterIds.filter((id) => id !== chapterId)
+
+      if (chapterIds.length === 0) {
+        return []
+      }
+
+      return [
+        {
+          ...scope,
+          chapterIds,
+        },
+      ]
+    })
+
+    if (!isExamAffected) {
+      return [exam]
+    }
+
+    if (subjectScopes.length === 0) {
+      return []
+    }
+
+    return [
+      {
+        ...exam,
+        subjectScopes,
+      },
+    ]
+  })
+
   return {
     isDeleted: true,
     data: {
@@ -106,6 +144,7 @@ export function deleteChapter(
           chapterId: null,
         }
       }),
+      exams,
     },
   }
 }

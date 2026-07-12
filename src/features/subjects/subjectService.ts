@@ -70,6 +70,27 @@ export function deleteSubject(
     }
   }
 
+  const exams = data.exams.flatMap((exam) => {
+    const subjectScopes = exam.subjectScopes.filter(
+      (scope) => scope.subjectId !== subjectId,
+    )
+
+    if (subjectScopes.length === 0) {
+      return []
+    }
+
+    if (subjectScopes.length === exam.subjectScopes.length) {
+      return [exam]
+    }
+
+    return [
+      {
+        ...exam,
+        subjectScopes,
+      },
+    ]
+  })
+
   return {
     isDeleted: true,
     data: {
@@ -79,6 +100,7 @@ export function deleteSubject(
       homework: data.homework.filter(
         (homework) => homework.subjectId !== subjectId,
       ),
+      exams,
     },
   }
 }

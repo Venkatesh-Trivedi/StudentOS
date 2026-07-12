@@ -25,9 +25,34 @@ export type Homework = {
   updatedAt: string
 }
 
+export type ExamSubjectScope = {
+  subjectId: string
+  scopeType: 'entire' | 'specific'
+  chapterIds: string[]
+}
+
+export type ExamSeries = {
+  id: string
+  title: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type Exam = {
+  id: string
+  seriesId: string | null
+  title: string
+  examDate: string
+  subjectScopes: ExamSubjectScope[]
+  createdAt: string
+  updatedAt: string
+}
+
 export type StudentOSData = {
-  version: 2
+  version: 4
   subjects: Subject[]
   chapters: Chapter[]
   homework: Homework[]
+  examSeries: ExamSeries[]
+  exams: Exam[]
 }

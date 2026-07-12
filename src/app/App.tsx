@@ -11,6 +11,17 @@ import {
   deleteChapter,
   renameChapter,
 } from '../features/chapters/chapterService'
+import { ExamsScreen } from '../features/exams/ExamsScreen'
+import {
+  createExam,
+  deleteExam,
+  type ExamCreationInput,
+} from '../features/exams/examService'
+import {
+  createExamSeries,
+  deleteExamSeries,
+  renameExamSeries,
+} from '../features/exams/examSeriesService'
 import { HomeworkScreen } from '../features/homework/HomeworkScreen'
 import {
   createHomework,
@@ -32,7 +43,7 @@ type AppStartupState = {
   canPersist: boolean
 }
 
-type AppView = 'subjects' | 'homework'
+type AppView = 'subjects' | 'homework' | 'exams'
 
 function App() {
   const [startupState] = useState<AppStartupState>(loadAppStartupState)
@@ -159,6 +170,69 @@ function App() {
     return persistData(deletion.data)
   }
 
+  function handleCreateExamSeries(title: string): string | null {
+    const creation = createExamSeries(title, data)
+
+    if (!creation.isCreated) {
+      return creation.error
+    }
+
+    const nextData: StudentOSData = {
+      ...data,
+      examSeries: [...data.examSeries, creation.examSeries],
+    }
+
+    return persistData(nextData)
+  }
+
+  function handleRenameExamSeries(
+    seriesId: string,
+    title: string,
+  ): string | null {
+    const renaming = renameExamSeries(seriesId, title, data)
+
+    if (!renaming.isRenamed) {
+      return renaming.error
+    }
+
+    return persistData(renaming.data)
+  }
+
+  function handleDeleteExamSeries(seriesId: string): string | null {
+    const deletion = deleteExamSeries(seriesId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
+  function handleCreateExam(input: ExamCreationInput): string | null {
+    const creation = createExam(input, data)
+
+    if (!creation.isCreated) {
+      return creation.error
+    }
+
+    const nextData: StudentOSData = {
+      ...data,
+      exams: [...data.exams, creation.exam],
+    }
+
+    return persistData(nextData)
+  }
+
+  function handleDeleteExam(examId: string): string | null {
+    const deletion = deleteExam(examId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
   function handleNavigate(view: AppView) {
     setActiveView(view)
     setSelectedSubjectId(null)
@@ -205,6 +279,14 @@ function App() {
         >
           Homework
         </button>
+        <button
+          aria-current={activeView === 'exams' ? 'page' : undefined}
+          className="app-navigation-link"
+          type="button"
+          onClick={() => handleNavigate('exams')}
+        >
+          Exams
+        </button>
       </nav>
 
       {storageError ? (
@@ -214,7 +296,19 @@ function App() {
         </div>
       ) : null}
 
-      {activeView === 'homework' ? (
+      {activeView === 'exams' ? (
+        <ExamsScreen
+          chapters={data.chapters}
+          exams={data.exams}
+          examSeries={data.examSeries}
+          subjects={data.subjects}
+          onCreateExam={handleCreateExam}
+          onCreateExamSeries={handleCreateExamSeries}
+          onDeleteExam={handleDeleteExam}
+          onDeleteExamSeries={handleDeleteExamSeries}
+          onRenameExamSeries={handleRenameExamSeries}
+        />
+      ) : activeView === 'homework' ? (
         <HomeworkScreen
           chapters={data.chapters}
           homework={data.homework}
