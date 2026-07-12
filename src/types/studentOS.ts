@@ -4,3 +4,11 @@ export type Subject = {
   createdAt: string
   updatedAt: string
 }
+
+export type Chapter = {
+  id: string
+  subjectId: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
