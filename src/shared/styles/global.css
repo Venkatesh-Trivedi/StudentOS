@@ -421,7 +421,7 @@ svg {
 }
 
 .subject-open-button span:first-child,
-.chapter-list li > span {
+.chapter-name {
   overflow-wrap: anywhere;
 }
 
@@ -446,6 +446,12 @@ svg {
   margin-bottom: 10px;
 }
 
+.chapter-screen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .chapter-list {
   counter-reset: chapters;
 }
@@ -463,9 +469,142 @@ svg {
   font-weight: 700;
 }
 
-.chapter-list li > span {
+.chapter-item-content {
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 1 1 140px;
+}
+
+.chapter-name {
+  display: block;
+  color: #17343c;
+}
+
+.chapter-confidence-summary {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.chapter-confidence-low {
+  color: #a43c3a;
+}
+
+.chapter-confidence-medium {
+  color: #946316;
+}
+
+.chapter-confidence-high {
+  color: #2d7150;
+}
+
+.chapter-confidence-unset {
+  color: #6d7977;
+}
+
+.chapter-item-actions {
+  flex: 1 1 100%;
+  justify-content: flex-start;
+  padding-left: 40px;
+}
+
+.chapter-confidence-controls {
+  min-width: 0;
+  flex: 1 1 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #e2e6e1;
+  padding: 12px 0 0;
+}
+
+.chapter-confidence-controls legend {
+  padding: 0 6px 0 0;
+  color: #526562;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.chapter-confidence-options {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.confidence-option {
+  min-height: 36px;
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 6px 11px;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.confidence-option-low {
+  border-color: #e4bbb5;
+  color: #943936;
+  background: #fff6f4;
+}
+
+.confidence-option-medium {
+  border-color: #e7cf9d;
+  color: #815713;
+  background: #fff9ea;
+}
+
+.confidence-option-high {
+  border-color: #b9d7c4;
+  color: #286743;
+  background: #f1f8f3;
+}
+
+.confidence-option[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 2px currentColor;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.confidence-option:hover {
+  filter: brightness(0.97);
+}
+
+.confidence-clear {
+  margin-left: auto;
+}
+
+.chapter-rename-form {
+  flex: 1 1 calc(100% - 40px);
+}
+
+.chapter-revision-form {
+  min-width: 0;
+  flex: 1 1 100%;
+  border-top: 1px solid #e2e6e1;
+  padding-top: 12px;
+}
+
+.chapter-revision-form > label {
+  display: block;
+  margin-bottom: 8px;
+  color: #4d6260;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.chapter-revision-form-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.chapter-revision-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #aebeb7;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #20343a;
+  background: #fff;
 }
 
 .chapter-list li::before {
@@ -826,6 +965,128 @@ svg {
   margin: 0;
   color: #17343c;
   font-size: 1.1rem;
+}
+
+.revision-empty-state h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.1rem;
+}
+
+.revision-groups {
+  display: grid;
+  gap: 26px;
+}
+
+.revision-group-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.revision-group-heading h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.08rem;
+}
+
+.revision-group-heading span {
+  color: #71807c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.revision-task-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.revision-task-card {
+  display: grid;
+  min-width: 0;
+  grid-template-areas:
+    'completion actions'
+    'content content';
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  border: 1px solid #d9dfda;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fffefa;
+  box-shadow: 0 4px 14px rgb(39 66 67 / 5%);
+}
+
+.revision-task-completion {
+  display: inline-flex;
+  min-width: 0;
+  grid-area: completion;
+  align-items: flex-start;
+}
+
+.revision-task-completion input {
+  width: 19px;
+  height: 19px;
+  margin: 1px 0 0;
+  accent-color: #176c67;
+}
+
+.revision-task-content {
+  min-width: 0;
+  grid-area: content;
+}
+
+.revision-task-content h3 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.revision-task-subject,
+.revision-task-date,
+.revision-task-status {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.revision-task-subject {
+  color: #596b68;
+}
+
+.revision-task-date {
+  color: #6a625b;
+}
+
+.revision-task-status {
+  color: #176c67;
+  font-weight: 800;
+}
+
+.revision-task-actions {
+  grid-area: actions;
+}
+
+.revision-task-card-completed {
+  border-color: #e0e3df;
+  background: #f4f4ef;
+  box-shadow: none;
+}
+
+.revision-task-card-completed h3 {
+  color: #65716f;
+  text-decoration: line-through;
+}
+
+.revision-task-card-completed .revision-task-subject,
+.revision-task-card-completed .revision-task-date,
+.revision-task-card-completed .revision-task-status {
+  color: #75817e;
 }
 
 .exam-screen-actions {
@@ -1251,6 +1512,11 @@ svg {
     grid-column: 1 / -1;
   }
 
+  .chapter-revision-form-actions {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+  }
+
   .homework-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1260,6 +1526,12 @@ svg {
   }
 
   .homework-item {
+    grid-template-areas: 'completion content actions';
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .revision-task-card {
     grid-template-areas: 'completion content actions';
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: start;

@@ -1,4 +1,5 @@
 import type { Chapter, StudentOSData, Subject } from '../../types/studentOS'
+import { createId } from '../../shared/utils/createId'
 import { validateChapterName } from './chapterValidation'
 
 export type ChapterCreationResult =
@@ -64,12 +65,23 @@ export function createChapter(
     }
   }
 
+  let id: string
+
+  try {
+    id = createId()
+  } catch {
+    return {
+      isCreated: false,
+      error: 'Unable to create a unique ID',
+    }
+  }
+
   const timestamp = new Date().toISOString()
 
   return {
     isCreated: true,
     chapter: {
-      id: crypto.randomUUID(),
+      id,
       subjectId,
       name: validation.normalizedName,
       createdAt: timestamp,
@@ -145,6 +157,12 @@ export function deleteChapter(
         }
       }),
       exams,
+      chapterConfidences: data.chapterConfidences.filter(
+        (confidence) => confidence.chapterId !== chapterId,
+      ),
+      revisionTasks: data.revisionTasks.filter(
+        (revisionTask) => revisionTask.chapterId !== chapterId,
+      ),
     },
   }
 }

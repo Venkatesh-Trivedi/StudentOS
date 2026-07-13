@@ -29,6 +29,14 @@ import {
   toggleHomeworkCompletion,
   type HomeworkCreationInput,
 } from '../features/homework/homeworkService'
+import { RevisionScreen } from '../features/revision/RevisionScreen'
+import {
+  clearChapterConfidence,
+  createRevisionTask,
+  deleteRevisionTask,
+  setChapterConfidence,
+  toggleRevisionTaskCompletion,
+} from '../features/revision/revisionService'
 import {
   createSubject,
   deleteSubject,
@@ -36,7 +44,7 @@ import {
 } from '../features/subjects/subjectService'
 import { SubjectsScreen } from '../features/subjects/SubjectsScreen'
 import { TodayScreen } from '../features/today/TodayScreen'
-import type { StudentOSData } from '../types/studentOS'
+import type { ConfidenceLevel, StudentOSData } from '../types/studentOS'
 
 type AppStartupState = {
   data: StudentOSData
@@ -44,7 +52,14 @@ type AppStartupState = {
   canPersist: boolean
 }
 
-type AppView = 'today' | 'subjects' | 'homework' | 'exams'
+type MainAppView = 'today' | 'subjects' | 'homework' | 'exams'
+
+type AppView = MainAppView | 'revision'
+
+type RevisionReturnState = {
+  view: MainAppView
+  selectedSubjectId: string | null
+}
 
 function App() {
   const [startupState] = useState<AppStartupState>(loadAppStartupState)
@@ -53,6 +68,8 @@ function App() {
     null,
   )
   const [activeView, setActiveView] = useState<AppView>('today')
+  const [revisionReturnState, setRevisionReturnState] =
+    useState<RevisionReturnState | null>(null)
   const [storageError, setStorageError] = useState<string | null>(
     startupState.storageError,
   )
@@ -234,9 +251,95 @@ function App() {
     return persistData(deletion.data)
   }
 
-  function handleNavigate(view: AppView) {
+  function handleSetChapterConfidence(
+    chapterId: string,
+    level: ConfidenceLevel,
+  ): string | null {
+    const result = setChapterConfidence(chapterId, level, data)
+
+    if (!result.isSet) {
+      return result.error
+    }
+
+    return persistData(result.data)
+  }
+
+  function handleClearChapterConfidence(chapterId: string): string | null {
+    const result = clearChapterConfidence(chapterId, data)
+
+    if (!result.isCleared) {
+      return result.error
+    }
+
+    return persistData(result.data)
+  }
+
+  function handleCreateRevisionTask(
+    chapterId: string,
+    scheduledDate: string,
+  ): string | null {
+    const creation = createRevisionTask(chapterId, scheduledDate, data)
+
+    if (!creation.isCreated) {
+      return creation.error
+    }
+
+    const nextData: StudentOSData = {
+      ...data,
+      revisionTasks: [...data.revisionTasks, creation.revisionTask],
+    }
+
+    return persistData(nextData)
+  }
+
+  function handleToggleRevisionTask(revisionTaskId: string): string | null {
+    const toggling = toggleRevisionTaskCompletion(revisionTaskId, data)
+
+    if (!toggling.isToggled) {
+      return toggling.error
+    }
+
+    return persistData(toggling.data)
+  }
+
+  function handleDeleteRevisionTask(revisionTaskId: string): string | null {
+    const deletion = deleteRevisionTask(revisionTaskId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
+  function handleNavigate(view: MainAppView) {
     setActiveView(view)
     setSelectedSubjectId(null)
+    setRevisionReturnState(null)
+  }
+
+  function handleOpenRevisionPlan() {
+    if (activeView === 'revision') {
+      return
+    }
+
+    setRevisionReturnState({
+      view: activeView,
+      selectedSubjectId,
+    })
+    setActiveView('revision')
+  }
+
+  function handleBackFromRevisionPlan() {
+    setActiveView(revisionReturnState?.view ?? 'today')
+    setSelectedSubjectId(revisionReturnState?.selectedSubjectId ?? null)
+    setRevisionReturnState(null)
+  }
+
+  function handleViewChapter(subjectId: string) {
+    setActiveView('subjects')
+    setSelectedSubjectId(subjectId)
+    setRevisionReturnState(null)
   }
 
   function persistData(nextData: StudentOSData): string | null {
@@ -305,11 +408,23 @@ function App() {
         </div>
       ) : null}
 
-      {activeView === 'today' ? (
+      {activeView === 'revision' ? (
+        <RevisionScreen
+          chapters={data.chapters}
+          revisionTasks={data.revisionTasks}
+          subjects={data.subjects}
+          onBack={handleBackFromRevisionPlan}
+          onDeleteRevisionTask={handleDeleteRevisionTask}
+          onToggleRevisionTask={handleToggleRevisionTask}
+        />
+      ) : activeView === 'today' ? (
         <TodayScreen
           data={data}
           onToggleHomework={handleToggleHomework}
+          onToggleRevisionTask={handleToggleRevisionTask}
+          onViewChapter={handleViewChapter}
           onViewExams={() => handleNavigate('exams')}
+          onViewRevisionPlan={handleOpenRevisionPlan}
         />
       ) : activeView === 'exams' ? (
         <ExamsScreen
@@ -338,10 +453,15 @@ function App() {
           chapters={data.chapters.filter(
             (chapter) => chapter.subjectId === selectedSubject.id,
           )}
+          chapterConfidences={data.chapterConfidences}
           onBack={() => setSelectedSubjectId(null)}
+          onClearChapterConfidence={handleClearChapterConfidence}
           onCreateChapter={handleCreateChapter}
           onDeleteChapter={handleDeleteChapter}
           onRenameChapter={handleRenameChapter}
+          onScheduleRevision={handleCreateRevisionTask}
+          onSetChapterConfidence={handleSetChapterConfidence}
+          onViewRevisionPlan={handleOpenRevisionPlan}
         />
       ) : (
         <SubjectsScreen

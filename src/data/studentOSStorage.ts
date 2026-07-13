@@ -1,9 +1,11 @@
 import type {
   Chapter,
+  ChapterConfidence,
   Exam,
   ExamSeries,
   ExamSubjectScope,
   Homework,
+  RevisionTask,
   StudentOSData,
   Subject,
 } from '../types/studentOS'
@@ -39,12 +41,14 @@ export type StudentOSDataSaveResult =
 
 export function createEmptyStudentOSData(): StudentOSData {
   return {
-    version: 4,
+    version: 5,
     subjects: [],
     chapters: [],
     homework: [],
     examSeries: [],
     exams: [],
+    chapterConfidences: [],
+    revisionTasks: [],
   }
 }
 
@@ -92,26 +96,37 @@ export function loadStudentOSData(
   if (isStudentOSDataVersion1(parsedData)) {
     const version2Data = migrateStudentOSDataVersion1(parsedData)
     const version3Data = migrateStudentOSDataVersion2(version2Data)
+    const version4Data = migrateStudentOSDataVersion3(version3Data)
 
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion3(version3Data),
+      data: migrateStudentOSDataVersion4(version4Data),
     }
   }
 
   if (isStudentOSDataVersion2(parsedData)) {
+    const version3Data = migrateStudentOSDataVersion2(parsedData)
+    const version4Data = migrateStudentOSDataVersion3(version3Data)
+
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion3(
-        migrateStudentOSDataVersion2(parsedData),
-      ),
+      data: migrateStudentOSDataVersion4(version4Data),
     }
   }
 
   if (isStudentOSDataVersion3(parsedData)) {
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion3(parsedData),
+      data: migrateStudentOSDataVersion4(
+        migrateStudentOSDataVersion3(parsedData),
+      ),
+    }
+  }
+
+  if (isStudentOSDataVersion4(parsedData)) {
+    return {
+      isSuccess: true,
+      data: migrateStudentOSDataVersion4(parsedData),
     }
   }
 
@@ -128,7 +143,8 @@ export function loadStudentOSData(
     parsedData.version !== 1 &&
     parsedData.version !== 2 &&
     parsedData.version !== 3 &&
-    parsedData.version !== 4
+    parsedData.version !== 4 &&
+    parsedData.version !== 5
   ) {
     return {
       isSuccess: false,
@@ -187,7 +203,7 @@ function getDefaultStorage(): Storage | null {
 function isStudentOSData(value: unknown): value is StudentOSData {
   return (
     isRecord(value) &&
-    value.version === 4 &&
+    value.version === 5 &&
     Array.isArray(value.subjects) &&
     value.subjects.every(isSubject) &&
     Array.isArray(value.chapters) &&
@@ -197,7 +213,12 @@ function isStudentOSData(value: unknown): value is StudentOSData {
     Array.isArray(value.examSeries) &&
     value.examSeries.every(isExamSeries) &&
     Array.isArray(value.exams) &&
-    value.exams.every(isExam)
+    value.exams.every(isExam) &&
+    Array.isArray(value.chapterConfidences) &&
+    value.chapterConfidences.every(isChapterConfidence) &&
+    hasUniqueChapterConfidences(value.chapterConfidences) &&
+    Array.isArray(value.revisionTasks) &&
+    value.revisionTasks.every(isRevisionTask)
   )
 }
 
@@ -236,6 +257,15 @@ type StudentOSDataVersion3 = {
   homework: Homework[]
   examSeries: ExamSeries[]
   exams: ExamVersion3[]
+}
+
+type StudentOSDataVersion4 = {
+  version: 4
+  subjects: Subject[]
+  chapters: Chapter[]
+  homework: Homework[]
+  examSeries: ExamSeries[]
+  exams: Exam[]
 }
 
 function isStudentOSDataVersion1(
@@ -311,7 +341,7 @@ function isStudentOSDataVersion3(
 
 function migrateStudentOSDataVersion3(
   data: StudentOSDataVersion3,
-): StudentOSData {
+): StudentOSDataVersion4 {
   return {
     version: 4,
     subjects: [...data.subjects],
@@ -334,6 +364,40 @@ function migrateStudentOSDataVersion3(
   }
 }
 
+function isStudentOSDataVersion4(
+  value: unknown,
+): value is StudentOSDataVersion4 {
+  return (
+    isRecord(value) &&
+    value.version === 4 &&
+    Array.isArray(value.subjects) &&
+    value.subjects.every(isSubject) &&
+    Array.isArray(value.chapters) &&
+    value.chapters.every(isChapter) &&
+    Array.isArray(value.homework) &&
+    value.homework.every(isHomework) &&
+    Array.isArray(value.examSeries) &&
+    value.examSeries.every(isExamSeries) &&
+    Array.isArray(value.exams) &&
+    value.exams.every(isExam)
+  )
+}
+
+function migrateStudentOSDataVersion4(
+  data: StudentOSDataVersion4,
+): StudentOSData {
+  return {
+    version: 5,
+    subjects: [...data.subjects],
+    chapters: [...data.chapters],
+    homework: [...data.homework],
+    examSeries: [...data.examSeries],
+    exams: [...data.exams],
+    chapterConfidences: [],
+    revisionTasks: [],
+  }
+}
+
 function isSubject(value: unknown): value is Subject {
   return (
     isRecord(value) &&
@@ -350,6 +414,38 @@ function isChapter(value: unknown): value is Chapter {
     isString(value.id) &&
     isString(value.subjectId) &&
     isString(value.name) &&
+    isString(value.createdAt) &&
+    isString(value.updatedAt)
+  )
+}
+
+function isChapterConfidence(value: unknown): value is ChapterConfidence {
+  return (
+    isRecord(value) &&
+    isString(value.chapterId) &&
+    (value.level === 'low' ||
+      value.level === 'medium' ||
+      value.level === 'high') &&
+    isString(value.updatedAt)
+  )
+}
+
+function hasUniqueChapterConfidences(
+  values: ChapterConfidence[],
+): boolean {
+  const chapterIds = new Set(values.map((value) => value.chapterId))
+
+  return chapterIds.size === values.length
+}
+
+function isRevisionTask(value: unknown): value is RevisionTask {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.chapterId) &&
+    isString(value.scheduledDate) &&
+    typeof value.isCompleted === 'boolean' &&
+    (isString(value.completedAt) || value.completedAt === null) &&
     isString(value.createdAt) &&
     isString(value.updatedAt)
   )

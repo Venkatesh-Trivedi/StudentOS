@@ -5,18 +5,24 @@ import {
   createTodayPlan,
   type TodayExamPlanItem,
   type TodayPlanItem,
+  type TodayRevisionPlanItem,
 } from './todayPlanning'
 
 export type TodayScreenProps = {
   data: StudentOSData
   onToggleHomework: (homeworkId: string) => string | null
+  onToggleRevisionTask: (revisionTaskId: string) => string | null
+  onViewChapter: (subjectId: string) => void
   onViewExams: () => void
+  onViewRevisionPlan: () => void
 }
 
 type TodayPlanListProps = {
   items: TodayPlanItem[]
   isStartHere?: boolean
   onToggleHomework: (homeworkId: string) => void
+  onToggleRevisionTask: (revisionTaskId: string) => void
+  onViewChapter: (subjectId: string) => void
   onViewExams: () => void
 }
 
@@ -47,6 +53,8 @@ function TodayPlanList({
   items,
   isStartHere = false,
   onToggleHomework,
+  onToggleRevisionTask,
+  onViewChapter,
   onViewExams,
 }: TodayPlanListProps) {
   return (
@@ -57,6 +65,8 @@ function TodayPlanList({
             isStartHere={isStartHere}
             item={item}
             onToggleHomework={onToggleHomework}
+            onToggleRevisionTask={onToggleRevisionTask}
+            onViewChapter={onViewChapter}
             onViewExams={onViewExams}
           />
         </li>
@@ -69,6 +79,8 @@ type TodayPlanItemCardProps = {
   item: TodayPlanItem
   isStartHere: boolean
   onToggleHomework: (homeworkId: string) => void
+  onToggleRevisionTask: (revisionTaskId: string) => void
+  onViewChapter: (subjectId: string) => void
   onViewExams: () => void
 }
 
@@ -76,6 +88,8 @@ function TodayPlanItemCard({
   item,
   isStartHere,
   onToggleHomework,
+  onToggleRevisionTask,
+  onViewChapter,
   onViewExams,
 }: TodayPlanItemCardProps) {
   const className = `today-plan-item${isStartHere ? ' today-plan-item-featured' : ''}`
@@ -118,11 +132,22 @@ function TodayPlanItemCard({
     )
   }
 
+  if (item.type === 'exam') {
+    return (
+      <TodayExamPlanItemCard
+        className={className}
+        item={item}
+        onViewExams={onViewExams}
+      />
+    )
+  }
+
   return (
-    <TodayExamPlanItemCard
+    <TodayRevisionPlanItemCard
       className={className}
       item={item}
-      onViewExams={onViewExams}
+      onToggleRevisionTask={onToggleRevisionTask}
+      onViewChapter={onViewChapter}
     />
   )
 }
@@ -185,10 +210,76 @@ function TodayExamPlanItemCard({
   )
 }
 
+type TodayRevisionPlanItemCardProps = {
+  className: string
+  item: TodayRevisionPlanItem
+  onToggleRevisionTask: (revisionTaskId: string) => void
+  onViewChapter: (subjectId: string) => void
+}
+
+function TodayRevisionPlanItemCard({
+  className,
+  item,
+  onToggleRevisionTask,
+  onViewChapter,
+}: TodayRevisionPlanItemCardProps) {
+  const isScheduled = item.revisionKind === 'scheduled'
+
+  return (
+    <article className={className}>
+      <div className="today-plan-item-heading">
+        <div>
+          <p className="today-item-type">
+            {isScheduled ? 'Revision' : 'Suggested revision'}
+          </p>
+          <h3 className="today-item-title">{item.title}</h3>
+        </div>
+        {isScheduled ? (
+          <label className="today-homework-completion">
+            <input
+              aria-label={`Mark revision for ${item.chapter.name} complete`}
+              checked={false}
+              type="checkbox"
+              onChange={() => onToggleRevisionTask(item.taskId)}
+            />
+          </label>
+        ) : (
+          <button
+            aria-label={`View chapter ${item.chapter.name}`}
+            className="button button-secondary button-compact"
+            type="button"
+            onClick={() => onViewChapter(item.subject.id)}
+          >
+            View chapter
+          </button>
+        )}
+      </div>
+
+      <p className="today-item-meta">
+        <span>{item.subject.name}</span>
+        <span aria-hidden="true">&middot;</span>
+        <span>{item.chapter.name}</span>
+      </p>
+      <p className="today-item-reason">{item.reason}</p>
+      {item.scheduledDate ? (
+        <p className="today-item-date">
+          Revision date{' '}
+          <time dateTime={item.scheduledDate}>
+            {formatLocalDate(item.scheduledDate)}
+          </time>
+        </p>
+      ) : null}
+    </article>
+  )
+}
+
 export function TodayScreen({
   data,
   onToggleHomework,
+  onToggleRevisionTask,
+  onViewChapter,
   onViewExams,
+  onViewRevisionPlan,
 }: TodayScreenProps) {
   const [actionError, setActionError] = useState<string | null>(null)
   const currentDate = new Date()
@@ -201,15 +292,30 @@ export function TodayScreen({
     setActionError(onToggleHomework(homeworkId))
   }
 
+  function handleToggleRevisionTask(revisionTaskId: string) {
+    setActionError(onToggleRevisionTask(revisionTaskId))
+  }
+
   return (
     <section className="screen today-screen" aria-labelledby="today-heading">
       <header className="screen-heading">
         <p className="eyebrow">Your study plan</p>
-        <h1 id="today-heading">Today</h1>
-        <time className="today-date" dateTime={plan.today}>
-          {formatTodayDate(currentDate)}
-        </time>
-        <p>Here’s what needs your attention.</p>
+        <div className="section-heading-row">
+          <div>
+            <h1 id="today-heading">Today</h1>
+            <time className="today-date" dateTime={plan.today}>
+              {formatTodayDate(currentDate)}
+            </time>
+            <p>Here’s what needs your attention.</p>
+          </div>
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={onViewRevisionPlan}
+          >
+            Revision plan
+          </button>
+        </div>
       </header>
 
       {startHereItem ? (
@@ -225,6 +331,8 @@ export function TodayScreen({
               isStartHere
               items={[startHereItem]}
               onToggleHomework={handleToggleHomework}
+              onToggleRevisionTask={handleToggleRevisionTask}
+              onViewChapter={onViewChapter}
               onViewExams={onViewExams}
             />
           </section>
@@ -240,6 +348,8 @@ export function TodayScreen({
               <TodayPlanList
                 items={nextUpItems}
                 onToggleHomework={handleToggleHomework}
+                onToggleRevisionTask={handleToggleRevisionTask}
+                onViewChapter={onViewChapter}
                 onViewExams={onViewExams}
               />
             </section>
@@ -256,6 +366,8 @@ export function TodayScreen({
               <TodayPlanList
                 items={comingSoonItems}
                 onToggleHomework={handleToggleHomework}
+                onToggleRevisionTask={handleToggleRevisionTask}
+                onViewChapter={onViewChapter}
                 onViewExams={onViewExams}
               />
             </section>

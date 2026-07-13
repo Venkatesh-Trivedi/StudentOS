@@ -1,4 +1,5 @@
 import type { Exam, StudentOSData } from '../../types/studentOS'
+import { createId } from '../../shared/utils/createId'
 import {
   validateExam,
   type ExamValidationInput,
@@ -44,12 +45,23 @@ export function createExam(
     }
   }
 
+  let id: string
+
+  try {
+    id = createId()
+  } catch {
+    return {
+      isCreated: false,
+      error: 'Unable to create a unique ID',
+    }
+  }
+
   const timestamp = new Date().toISOString()
 
   return {
     isCreated: true,
     exam: {
-      id: crypto.randomUUID(),
+      id,
       seriesId: validation.seriesId,
       title: validation.normalizedTitle,
       examDate: validation.examDate,

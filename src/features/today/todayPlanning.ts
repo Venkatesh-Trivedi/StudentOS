@@ -2,11 +2,13 @@ import type {
   Exam,
   ExamSubjectScope,
   Homework,
+  RevisionTask,
   StudentOSData,
 } from '../../types/studentOS'
 
 export const TODAY_HOMEWORK_WINDOW_DAYS = 7
 export const TODAY_EXAM_WINDOW_DAYS = 14
+export const TODAY_REVISION_WINDOW_DAYS = 7
 
 export type TodaySubjectSummary = {
   id: string
@@ -55,7 +57,40 @@ export type TodayExamPlanItem = {
   priorityScore: number
 }
 
-export type TodayPlanItem = TodayHomeworkPlanItem | TodayExamPlanItem
+export type TodayScheduledRevisionPlanItem = {
+  type: 'revision'
+  revisionKind: 'scheduled'
+  sourceItemId: string
+  taskId: string
+  title: string
+  scheduledDate: string
+  subject: TodaySubjectSummary
+  chapter: TodayChapterSummary
+  reason: string
+  priorityScore: number
+}
+
+export type TodayConfidenceRevisionPlanItem = {
+  type: 'revision'
+  revisionKind: 'recommendation'
+  sourceItemId: string
+  taskId: null
+  title: string
+  scheduledDate: null
+  subject: TodaySubjectSummary
+  chapter: TodayChapterSummary
+  reason: string
+  priorityScore: number
+}
+
+export type TodayRevisionPlanItem =
+  | TodayScheduledRevisionPlanItem
+  | TodayConfidenceRevisionPlanItem
+
+export type TodayPlanItem =
+  | TodayHomeworkPlanItem
+  | TodayExamPlanItem
+  | TodayRevisionPlanItem
 
 export type TodayPlan = {
   today: string
@@ -89,6 +124,9 @@ export function createTodayPlan(
   )
   const chapterNames = new Map(
     data.chapters.map((chapter) => [chapter.id, chapter.name]),
+  )
+  const chaptersById = new Map(
+    data.chapters.map((chapter) => [chapter.id, chapter]),
   )
   const chapterIdsBySubject = createChapterIdsBySubject(data)
   const seriesById = new Map(
@@ -135,9 +173,124 @@ export function createTodayPlan(
     )
   }
 
+  const representedRevisionChapterIds = new Set<string>()
+  const chaptersWithUpcomingRevisionTasks = new Set<string>()
+
+  for (const revisionTask of data.revisionTasks) {
+    if (revisionTask.isCompleted) {
+      continue
+    }
+
+    const dayDifference = getDayDifference(
+      revisionTask.scheduledDate,
+      todayDayNumber,
+    )
+
+    if (
+      dayDifference !== null &&
+      dayDifference >= 0 &&
+      dayDifference <= TODAY_REVISION_WINDOW_DAYS
+    ) {
+      chaptersWithUpcomingRevisionTasks.add(revisionTask.chapterId)
+    }
+
+    if (
+      dayDifference === null ||
+      dayDifference > TODAY_REVISION_WINDOW_DAYS
+    ) {
+      continue
+    }
+
+    const chapter = chaptersById.get(revisionTask.chapterId)
+
+    if (!chapter) {
+      continue
+    }
+
+    items.push(
+      createScheduledRevisionPlanItem(
+        revisionTask,
+        dayDifference,
+        chapter,
+        subjectNames,
+      ),
+    )
+    representedRevisionChapterIds.add(revisionTask.chapterId)
+  }
+
+  const confidenceByChapterId = new Map(
+    data.chapterConfidences.map((confidence) => [
+      confidence.chapterId,
+      confidence,
+    ]),
+  )
+  let recommendationCount = 0
+
+  for (const chapter of data.chapters) {
+    if (recommendationCount >= 2) {
+      break
+    }
+
+    if (
+      confidenceByChapterId.get(chapter.id)?.level !== 'low' ||
+      chaptersWithUpcomingRevisionTasks.has(chapter.id) ||
+      representedRevisionChapterIds.has(chapter.id)
+    ) {
+      continue
+    }
+
+    items.push(createConfidenceRevisionPlanItem(chapter, subjectNames))
+    representedRevisionChapterIds.add(chapter.id)
+    recommendationCount += 1
+  }
+
   return {
     today,
     items: sortTodayPlanItems(items),
+  }
+}
+
+function createScheduledRevisionPlanItem(
+  revisionTask: RevisionTask,
+  dayDifference: number,
+  chapter: { id: string; subjectId: string; name: string },
+  subjectNames: ReadonlyMap<string, string>,
+): TodayScheduledRevisionPlanItem {
+  return {
+    type: 'revision',
+    revisionKind: 'scheduled',
+    sourceItemId: revisionTask.id,
+    taskId: revisionTask.id,
+    title: chapter.name,
+    scheduledDate: revisionTask.scheduledDate,
+    subject: createSubjectSummary(chapter.subjectId, subjectNames),
+    chapter: {
+      id: chapter.id,
+      name: chapter.name,
+    },
+    reason: getRevisionReason(dayDifference),
+    priorityScore: getRevisionPriorityScore(dayDifference),
+  }
+}
+
+function createConfidenceRevisionPlanItem(
+  chapter: { id: string; subjectId: string; name: string },
+  subjectNames: ReadonlyMap<string, string>,
+): TodayConfidenceRevisionPlanItem {
+  return {
+    type: 'revision',
+    revisionKind: 'recommendation',
+    sourceItemId: chapter.id,
+    taskId: null,
+    title: chapter.name,
+    scheduledDate: null,
+    subject: createSubjectSummary(chapter.subjectId, subjectNames),
+    chapter: {
+      id: chapter.id,
+      name: chapter.name,
+    },
+    reason: 'Low confidence — worth revising',
+    priorityScore: 12,
   }
 }
 
@@ -290,24 +443,42 @@ function getExamReason(dayDifference: number): string {
   return `Exam in ${dayDifference} days`
 }
 
-function getHomeworkPriorityScore(dayDifference: number): number {
+function getRevisionReason(dayDifference: number): string {
   if (dayDifference < 0) {
-    return 0
+    const overdueDays = Math.abs(dayDifference)
+
+    return `Overdue by ${overdueDays} ${overdueDays === 1 ? 'day' : 'days'}`
   }
 
   if (dayDifference === 0) {
-    return 1
+    return 'Due today'
   }
 
   if (dayDifference === 1) {
+    return 'Due tomorrow'
+  }
+
+  return `Due in ${dayDifference} days`
+}
+
+function getHomeworkPriorityScore(dayDifference: number): number {
+  if (dayDifference < 0) {
+    return 1
+  }
+
+  if (dayDifference === 0) {
     return 3
   }
 
-  if (dayDifference <= 3) {
-    return 5
+  if (dayDifference === 1) {
+    return 6
   }
 
-  return 6
+  if (dayDifference <= 3) {
+    return 9
+  }
+
+  return 11
 }
 
 function getExamPriorityScore(dayDifference: number): number {
@@ -316,14 +487,34 @@ function getExamPriorityScore(dayDifference: number): number {
   }
 
   if (dayDifference === 1) {
-    return 2
+    return 5
   }
 
   if (dayDifference <= 3) {
+    return 8
+  }
+
+  return 11
+}
+
+function getRevisionPriorityScore(dayDifference: number): number {
+  if (dayDifference < 0) {
+    return 2
+  }
+
+  if (dayDifference === 0) {
     return 4
   }
 
-  return 6
+  if (dayDifference === 1) {
+    return 7
+  }
+
+  if (dayDifference <= 3) {
+    return 10
+  }
+
+  return 11
 }
 
 function getDayDifference(
@@ -380,8 +571,11 @@ function sortTodayPlanItems(items: TodayPlanItem[]): TodayPlanItem[] {
         return dateDifference
       }
 
-      if (first.item.type !== second.item.type) {
-        return first.item.type === 'homework' ? -1 : 1
+      const typeDifference =
+        getPlanItemTypeOrder(first.item) - getPlanItemTypeOrder(second.item)
+
+      if (typeDifference !== 0) {
+        return typeDifference
       }
 
       return first.index - second.index
@@ -390,5 +584,25 @@ function sortTodayPlanItems(items: TodayPlanItem[]): TodayPlanItem[] {
 }
 
 function getPlanItemDate(item: TodayPlanItem): string {
-  return item.type === 'homework' ? item.dueDate : item.examDate
+  if (item.type === 'homework') {
+    return item.dueDate
+  }
+
+  if (item.type === 'exam') {
+    return item.examDate
+  }
+
+  return item.scheduledDate ?? '9999-12-31'
+}
+
+function getPlanItemTypeOrder(item: TodayPlanItem): number {
+  if (item.type === 'homework') {
+    return 0
+  }
+
+  if (item.type === 'exam') {
+    return 1
+  }
+
+  return 2
 }

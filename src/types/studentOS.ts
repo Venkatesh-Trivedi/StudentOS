@@ -13,6 +13,24 @@ export type Chapter = {
   updatedAt: string
 }
 
+export type ConfidenceLevel = 'low' | 'medium' | 'high'
+
+export type ChapterConfidence = {
+  chapterId: string
+  level: ConfidenceLevel
+  updatedAt: string
+}
+
+export type RevisionTask = {
+  id: string
+  chapterId: string
+  scheduledDate: string
+  isCompleted: boolean
+  completedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type Homework = {
   id: string
   subjectId: string
@@ -49,10 +67,12 @@ export type Exam = {
 }
 
 export type StudentOSData = {
-  version: 4
+  version: 5
   subjects: Subject[]
   chapters: Chapter[]
   homework: Homework[]
   examSeries: ExamSeries[]
   exams: Exam[]
+  chapterConfidences: ChapterConfidence[]
+  revisionTasks: RevisionTask[]
 }

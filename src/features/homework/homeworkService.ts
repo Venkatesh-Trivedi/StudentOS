@@ -1,4 +1,5 @@
 import type { Homework, StudentOSData } from '../../types/studentOS'
+import { createId } from '../../shared/utils/createId'
 import {
   validateHomework,
   type HomeworkValidationInput,
@@ -53,12 +54,23 @@ export function createHomework(
     }
   }
 
+  let id: string
+
+  try {
+    id = createId()
+  } catch {
+    return {
+      isCreated: false,
+      error: 'Unable to create a unique ID',
+    }
+  }
+
   const timestamp = new Date().toISOString()
 
   return {
     isCreated: true,
     homework: {
-      id: crypto.randomUUID(),
+      id,
       subjectId: validation.subjectId,
       chapterId: validation.chapterId,
       title: validation.normalizedTitle,

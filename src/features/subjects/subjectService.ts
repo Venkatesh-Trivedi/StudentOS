@@ -1,4 +1,5 @@
 import type { StudentOSData, Subject } from '../../types/studentOS'
+import { createId } from '../../shared/utils/createId'
 import { validateSubjectName } from './subjectValidation'
 
 export type SubjectCreationResult =
@@ -44,12 +45,23 @@ export function createSubject(
     }
   }
 
+  let id: string
+
+  try {
+    id = createId()
+  } catch {
+    return {
+      isCreated: false,
+      error: 'Unable to create a unique ID',
+    }
+  }
+
   const timestamp = new Date().toISOString()
 
   return {
     isCreated: true,
     subject: {
-      id: crypto.randomUUID(),
+      id,
       name: validation.normalizedName,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -70,6 +82,11 @@ export function deleteSubject(
     }
   }
 
+  const chapterIdsToDelete = new Set(
+    data.chapters
+      .filter((chapter) => chapter.subjectId === subjectId)
+      .map((chapter) => chapter.id),
+  )
   const exams = data.exams.flatMap((exam) => {
     const subjectScopes = exam.subjectScopes.filter(
       (scope) => scope.subjectId !== subjectId,
@@ -101,6 +118,12 @@ export function deleteSubject(
         (homework) => homework.subjectId !== subjectId,
       ),
       exams,
+      chapterConfidences: data.chapterConfidences.filter(
+        (confidence) => !chapterIdsToDelete.has(confidence.chapterId),
+      ),
+      revisionTasks: data.revisionTasks.filter(
+        (revisionTask) => !chapterIdsToDelete.has(revisionTask.chapterId),
+      ),
     },
   }
 }
