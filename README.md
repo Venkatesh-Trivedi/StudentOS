@@ -10,6 +10,12 @@ StudentOS is in active development and is not yet a public release.
 
 ## Current features
 
+### Today and revision
+
+- See a focused Today plan derived from upcoming homework, exams, and revision tasks
+- Track chapter confidence and schedule revision work
+- Complete homework and revision tasks from the relevant planning screens
+
 ### Subjects and chapters
 
 - Create subjects and organise their chapters
@@ -29,15 +35,25 @@ StudentOS is in active development and is not yet a public release.
 - Include an entire subject or selected chapters for each subject scope
 - Keep an “Entire subject” syllabus as a frozen snapshot, so chapters added later are not silently included
 
-### Local persistence
+### Study resources
+
+- Save website links and plain-text notes for a subject or chapter
+- Surface relevant study material alongside Today and revision work
+- Open links safely and manage resources without uploading their contents
+
+### Local persistence and backups
 
 - Keep StudentOS data in the browser with versioned `localStorage`
 - Migrate supported older data formats when the storage schema changes
-- Preserve changes only after they have been saved successfully
+- Download a readable JSON backup containing the complete StudentOS dataset
+- Preview and confirm a JSON restore before it replaces the data currently stored in StudentOS
+- Preserve current data if an imported backup is invalid or cannot be saved
 
 ## Data and privacy
 
-StudentOS currently stores all data in the browser under one versioned local-storage record. There are no accounts, cloud sync, or server-side storage yet. Browser storage is specific to the browser and device where it is used.
+StudentOS currently stores all data in the browser under one versioned local-storage record. Data remains specific to the browser and device where the app is used.
+
+Backups are manual and local: StudentOS downloads a JSON file to the device, and a selected backup is read in the browser when restored. Backup data is not uploaded to a server. There are still no accounts, automatic backups, or cloud sync.
 
 ## Development
 
@@ -54,7 +70,7 @@ From the repository root:
 - TypeScript
 - Vite
 - CSS
-- Browser `localStorage`
+- Browser `localStorage`, Blob, and File APIs
 - Oxlint
 
 ## Project structure
@@ -62,13 +78,17 @@ From the repository root:
 ```text
 src/
   app/                 Application composition and state ownership
-  data/                Versioned browser storage
+  data/                Versioned storage, migration, and backup logic
   features/
+    today/             Daily study recommendations
     subjects/          Subject UI and domain logic
     chapters/          Chapter UI and domain logic
     homework/          Homework UI and domain logic
     exams/             Exam and exam-series UI and domain logic
-  shared/              Reusable components and styles
+    revision/          Confidence and revision planning
+    resources/         Link and note resources
+    backup/            Data export and import screen
+  shared/              Reusable components, utilities, and styles
   types/               Shared StudentOS data types
 ```
 

@@ -5,6 +5,7 @@ import {
   loadStudentOSData,
   saveStudentOSData,
 } from '../data/studentOSStorage'
+import { DataBackupScreen } from '../features/backup/DataBackupScreen'
 import { ChapterScreen } from '../features/chapters/ChapterScreen'
 import {
   createChapter,
@@ -61,7 +62,7 @@ type AppStartupState = {
 
 type MainAppView = 'today' | 'subjects' | 'homework' | 'exams'
 
-type AppView = MainAppView | 'revision' | 'resources'
+type AppView = MainAppView | 'revision' | 'resources' | 'backup'
 
 type RevisionReturnState = {
   view: MainAppView
@@ -96,6 +97,7 @@ function App() {
   const [storageError, setStorageError] = useState<string | null>(
     startupState.storageError,
   )
+  const [canPersist, setCanPersist] = useState(startupState.canPersist)
 
   const selectedSubject = data.subjects.find(
     (subject) => subject.id === selectedSubjectId,
@@ -373,6 +375,10 @@ function App() {
     return persistData(deletion.data)
   }
 
+  function handleImportData(importedData: StudentOSData): string | null {
+    return persistData(importedData, true)
+  }
+
   function handleNavigate(view: MainAppView) {
     setActiveView(view)
     setSelectedSubjectId(null)
@@ -382,7 +388,11 @@ function App() {
   }
 
   function handleOpenRevisionPlan() {
-    if (activeView === 'revision' || activeView === 'resources') {
+    if (
+      activeView === 'revision' ||
+      activeView === 'resources' ||
+      activeView === 'backup'
+    ) {
       return
     }
 
@@ -423,6 +433,14 @@ function App() {
     setResourcesContext({ subjectId: null, chapterId: null })
   }
 
+  function handleOpenDataBackup() {
+    setActiveView('backup')
+    setSelectedSubjectId(null)
+    setRevisionReturnState(null)
+    setResourcesReturnState(null)
+    setResourcesContext({ subjectId: null, chapterId: null })
+  }
+
   function handleViewChapter(subjectId: string) {
     setActiveView('subjects')
     setSelectedSubjectId(subjectId)
@@ -431,8 +449,11 @@ function App() {
     setResourcesContext({ subjectId: null, chapterId: null })
   }
 
-  function persistData(nextData: StudentOSData): string | null {
-    if (!startupState.canPersist) {
+  function persistData(
+    nextData: StudentOSData,
+    allowStorageRecovery = false,
+  ): string | null {
+    if (!canPersist && !allowStorageRecovery) {
       const error =
         startupState.storageError ?? 'StudentOS data could not be loaded safely'
 
@@ -449,6 +470,7 @@ function App() {
 
     setData(nextData)
     setStorageError(null)
+    setCanPersist(true)
 
     return null
   }
@@ -497,7 +519,13 @@ function App() {
         </div>
       ) : null}
 
-      {activeView === 'resources' ? (
+      {activeView === 'backup' ? (
+        <DataBackupScreen
+          data={data}
+          onBack={() => handleNavigate('today')}
+          onImportData={handleImportData}
+        />
+      ) : activeView === 'resources' ? (
         <ResourcesScreen
           key={`${resourcesContext.subjectId ?? 'all'}:${
             resourcesContext.chapterId ?? 'all'
@@ -528,6 +556,7 @@ function App() {
           data={data}
           onToggleHomework={handleToggleHomework}
           onToggleRevisionTask={handleToggleRevisionTask}
+          onViewDataBackup={handleOpenDataBackup}
           onViewChapter={handleViewChapter}
           onViewExams={() => handleNavigate('exams')}
           onViewResources={handleOpenResources}

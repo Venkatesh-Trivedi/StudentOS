@@ -13,6 +13,7 @@ export type TodayScreenProps = {
   data: StudentOSData
   onToggleHomework: (homeworkId: string) => string | null
   onToggleRevisionTask: (revisionTaskId: string) => string | null
+  onViewDataBackup: () => void
   onViewChapter: (subjectId: string) => void
   onViewExams: () => void
   onViewRevisionPlan: () => void
@@ -395,6 +396,7 @@ export function TodayScreen({
   data,
   onToggleHomework,
   onToggleRevisionTask,
+  onViewDataBackup,
   onViewChapter,
   onViewExams,
   onViewRevisionPlan,
@@ -428,6 +430,13 @@ export function TodayScreen({
             <p>Here’s what needs your attention.</p>
           </div>
           <div className="today-screen-actions">
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={onViewDataBackup}
+            >
+              Data &amp; backup
+            </button>
             <button
               className="button button-secondary"
               type="button"

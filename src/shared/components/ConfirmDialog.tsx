@@ -4,6 +4,7 @@ export type ConfirmDialogProps = {
   isOpen: boolean
   title: string
   message: string
+  confirmLabel?: string
   onCancel: () => void
   onConfirm: () => void
 }
@@ -12,11 +13,12 @@ export function ConfirmDialog({
   isOpen,
   title,
   message,
+  confirmLabel = 'Delete',
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
-  const deleteButtonRef = useRef<HTMLButtonElement>(null)
+  const confirmButtonRef = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const messageId = useId()
 
@@ -52,7 +54,7 @@ export function ConfirmDialog({
 
     const focusableButtons = [
       cancelButtonRef.current,
-      deleteButtonRef.current,
+      confirmButtonRef.current,
     ].filter((button): button is HTMLButtonElement => button !== null)
 
     if (focusableButtons.length === 0) {
@@ -102,11 +104,11 @@ export function ConfirmDialog({
           </button>
           <button
             className="button button-danger"
-            ref={deleteButtonRef}
+            ref={confirmButtonRef}
             type="button"
             onClick={onConfirm}
           >
-            Delete
+            {confirmLabel}
           </button>
         </div>
       </div>

@@ -14,6 +14,10 @@
 - Multi-subject exams with subject and chapter scopes
 - Exam series for grouping related exams
 - Frozen “Entire subject” exam syllabus snapshots, preventing later chapter additions from changing existing exams
+- Today planning derived from homework, exams, and revision work
+- Chapter confidence and scheduled revision tasks
+- Subject- and chapter-linked website and note resources
+- Manual local JSON backup export and import with shared validation, migration, preview, and replacement confirmation
 
 ## Legacy desktop prototype
 

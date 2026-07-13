@@ -44,6 +44,16 @@ export type StudentOSDataSaveResult =
       error: string
     }
 
+export type StudentOSDataValidationResult =
+  | {
+      isSuccess: true
+      data: StudentOSData
+    }
+  | {
+      isSuccess: false
+      error: 'unsupported-version' | 'invalid-structure'
+    }
+
 export function createEmptyStudentOSData(): StudentOSData {
   return {
     version: 6,
@@ -99,8 +109,26 @@ export function loadStudentOSData(
     }
   }
 
-  if (isStudentOSDataVersion1(parsedData)) {
-    const version2Data = migrateStudentOSDataVersion1(parsedData)
+  const validationResult = validateAndMigrateStudentOSData(parsedData)
+
+  if (!validationResult.isSuccess) {
+    return {
+      isSuccess: false,
+      error:
+        validationResult.error === 'unsupported-version'
+          ? 'Stored StudentOS data uses an unsupported version'
+          : 'Stored StudentOS data has an invalid structure',
+    }
+  }
+
+  return validationResult
+}
+
+export function validateAndMigrateStudentOSData(
+  value: unknown,
+): StudentOSDataValidationResult {
+  if (isStudentOSDataVersion1(value)) {
+    const version2Data = migrateStudentOSDataVersion1(value)
     const version3Data = migrateStudentOSDataVersion2(version2Data)
     const version4Data = migrateStudentOSDataVersion3(version3Data)
     const version5Data = migrateStudentOSDataVersion4(version4Data)
@@ -111,8 +139,8 @@ export function loadStudentOSData(
     }
   }
 
-  if (isStudentOSDataVersion2(parsedData)) {
-    const version3Data = migrateStudentOSDataVersion2(parsedData)
+  if (isStudentOSDataVersion2(value)) {
+    const version3Data = migrateStudentOSDataVersion2(value)
     const version4Data = migrateStudentOSDataVersion3(version3Data)
     const version5Data = migrateStudentOSDataVersion4(version4Data)
 
@@ -122,8 +150,8 @@ export function loadStudentOSData(
     }
   }
 
-  if (isStudentOSDataVersion3(parsedData)) {
-    const version4Data = migrateStudentOSDataVersion3(parsedData)
+  if (isStudentOSDataVersion3(value)) {
+    const version4Data = migrateStudentOSDataVersion3(value)
     const version5Data = migrateStudentOSDataVersion4(version4Data)
 
     return {
@@ -132,48 +160,48 @@ export function loadStudentOSData(
     }
   }
 
-  if (isStudentOSDataVersion4(parsedData)) {
+  if (isStudentOSDataVersion4(value)) {
     return {
       isSuccess: true,
       data: migrateStudentOSDataVersion5(
-        migrateStudentOSDataVersion4(parsedData),
+        migrateStudentOSDataVersion4(value),
       ),
     }
   }
 
-  if (isStudentOSDataVersion5(parsedData)) {
+  if (isStudentOSDataVersion5(value)) {
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion5(parsedData),
+      data: migrateStudentOSDataVersion5(value),
     }
   }
 
-  if (isStudentOSData(parsedData)) {
+  if (isStudentOSData(value)) {
     return {
       isSuccess: true,
-      data: parsedData,
+      data: value,
     }
   }
 
   if (
-    isRecord(parsedData) &&
-    typeof parsedData.version === 'number' &&
-    parsedData.version !== 1 &&
-    parsedData.version !== 2 &&
-    parsedData.version !== 3 &&
-    parsedData.version !== 4 &&
-    parsedData.version !== 5 &&
-    parsedData.version !== 6
+    isRecord(value) &&
+    typeof value.version === 'number' &&
+    value.version !== 1 &&
+    value.version !== 2 &&
+    value.version !== 3 &&
+    value.version !== 4 &&
+    value.version !== 5 &&
+    value.version !== 6
   ) {
     return {
       isSuccess: false,
-      error: 'Stored StudentOS data uses an unsupported version',
+      error: 'unsupported-version',
     }
   }
 
   return {
     isSuccess: false,
-    error: 'Stored StudentOS data has an invalid structure',
+    error: 'invalid-structure',
   }
 }
 

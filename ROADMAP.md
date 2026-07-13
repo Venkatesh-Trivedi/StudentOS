@@ -1,6 +1,6 @@
 # StudentOS roadmap
 
-StudentOS is being developed as a mobile-first web app for planning study work around subjects, chapters, homework, and exams.
+StudentOS is being developed as a mobile-first web app for planning study work around subjects, chapters, homework, exams, revision, and study resources.
 
 The direction remains:
 
@@ -13,18 +13,21 @@ The direction remains:
 - Versioned browser storage with migrations for supported older data
 - Subjects and chapters, including inline renaming and deletion
 - Homework linked to subjects and optional chapters, with completion and due-date groups
-- Multi-subject exams and exam series
-- Frozen exam syllabus snapshots so later chapter additions do not change an existing exam’s syllabus
+- Multi-subject exams, exam series, and frozen syllabus snapshots
+- Today planning derived from homework, exams, and revision work
+- Chapter confidence and scheduled revision tasks
+- Website links and notes connected to subjects and chapters
+- Manual local JSON export and import with validation, migration, preview, and confirmation
 
-## Next product priorities
+## Next major reliability milestone
 
-1. A Today screen and useful study recommendations
-2. Revision tasks and chapter confidence
-3. Resources linked to subjects and chapters
-4. Data export and import
-5. PWA support
-6. Optional cloud sync later
-7. AI only after the non-AI workflow is useful
+PWA support is the next major reliability milestone. The goal is to make StudentOS more dependable to install and use on students’ own devices while preserving its local-first design.
+
+## Later priorities
+
+- Continue refining Today recommendations and the core study-planning workflow
+- Consider optional cloud sync later, without making an account mandatory for local use
+- Consider AI only after the non-AI workflow is useful and dependable
 
 ## Product focus
 
