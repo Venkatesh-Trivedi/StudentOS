@@ -163,6 +163,16 @@ export function deleteChapter(
       revisionTasks: data.revisionTasks.filter(
         (revisionTask) => revisionTask.chapterId !== chapterId,
       ),
+      resources: data.resources.map((resource) => {
+        if (resource.chapterId !== chapterId) {
+          return resource
+        }
+
+        return {
+          ...resource,
+          chapterId: null,
+        }
+      }),
     },
   }
 }

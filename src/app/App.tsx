@@ -37,6 +37,13 @@ import {
   setChapterConfidence,
   toggleRevisionTaskCompletion,
 } from '../features/revision/revisionService'
+import { ResourcesScreen } from '../features/resources/ResourcesScreen'
+import {
+  createResource,
+  deleteResource,
+  renameResource,
+  type ResourceCreationInput,
+} from '../features/resources/resourceService'
 import {
   createSubject,
   deleteSubject,
@@ -54,11 +61,21 @@ type AppStartupState = {
 
 type MainAppView = 'today' | 'subjects' | 'homework' | 'exams'
 
-type AppView = MainAppView | 'revision'
+type AppView = MainAppView | 'revision' | 'resources'
 
 type RevisionReturnState = {
   view: MainAppView
   selectedSubjectId: string | null
+}
+
+type ResourcesReturnState = {
+  view: Exclude<AppView, 'resources'>
+  selectedSubjectId: string | null
+}
+
+type ResourcesContext = {
+  subjectId: string | null
+  chapterId: string | null
 }
 
 function App() {
@@ -70,6 +87,12 @@ function App() {
   const [activeView, setActiveView] = useState<AppView>('today')
   const [revisionReturnState, setRevisionReturnState] =
     useState<RevisionReturnState | null>(null)
+  const [resourcesReturnState, setResourcesReturnState] =
+    useState<ResourcesReturnState | null>(null)
+  const [resourcesContext, setResourcesContext] = useState<ResourcesContext>({
+    subjectId: null,
+    chapterId: null,
+  })
   const [storageError, setStorageError] = useState<string | null>(
     startupState.storageError,
   )
@@ -312,14 +335,54 @@ function App() {
     return persistData(deletion.data)
   }
 
+  function handleCreateResource(input: ResourceCreationInput): string | null {
+    const creation = createResource(input, data)
+
+    if (!creation.isCreated) {
+      return creation.error
+    }
+
+    const nextData: StudentOSData = {
+      ...data,
+      resources: [...data.resources, creation.resource],
+    }
+
+    return persistData(nextData)
+  }
+
+  function handleRenameResource(
+    resourceId: string,
+    title: string,
+  ): string | null {
+    const renaming = renameResource(resourceId, title, data)
+
+    if (!renaming.isRenamed) {
+      return renaming.error
+    }
+
+    return persistData(renaming.data)
+  }
+
+  function handleDeleteResource(resourceId: string): string | null {
+    const deletion = deleteResource(resourceId, data)
+
+    if (!deletion.isDeleted) {
+      return deletion.error
+    }
+
+    return persistData(deletion.data)
+  }
+
   function handleNavigate(view: MainAppView) {
     setActiveView(view)
     setSelectedSubjectId(null)
     setRevisionReturnState(null)
+    setResourcesReturnState(null)
+    setResourcesContext({ subjectId: null, chapterId: null })
   }
 
   function handleOpenRevisionPlan() {
-    if (activeView === 'revision') {
+    if (activeView === 'revision' || activeView === 'resources') {
       return
     }
 
@@ -336,10 +399,36 @@ function App() {
     setRevisionReturnState(null)
   }
 
+  function handleOpenResources(
+    subjectId: string | null,
+    chapterId: string | null,
+  ) {
+    if (activeView === 'resources') {
+      setResourcesContext({ subjectId, chapterId })
+      return
+    }
+
+    setResourcesReturnState({
+      view: activeView,
+      selectedSubjectId,
+    })
+    setResourcesContext({ subjectId, chapterId })
+    setActiveView('resources')
+  }
+
+  function handleBackFromResources() {
+    setActiveView(resourcesReturnState?.view ?? 'today')
+    setSelectedSubjectId(resourcesReturnState?.selectedSubjectId ?? null)
+    setResourcesReturnState(null)
+    setResourcesContext({ subjectId: null, chapterId: null })
+  }
+
   function handleViewChapter(subjectId: string) {
     setActiveView('subjects')
     setSelectedSubjectId(subjectId)
     setRevisionReturnState(null)
+    setResourcesReturnState(null)
+    setResourcesContext({ subjectId: null, chapterId: null })
   }
 
   function persistData(nextData: StudentOSData): string | null {
@@ -408,14 +497,31 @@ function App() {
         </div>
       ) : null}
 
-      {activeView === 'revision' ? (
+      {activeView === 'resources' ? (
+        <ResourcesScreen
+          key={`${resourcesContext.subjectId ?? 'all'}:${
+            resourcesContext.chapterId ?? 'all'
+          }`}
+          chapters={data.chapters}
+          initialChapterId={resourcesContext.chapterId}
+          initialSubjectId={resourcesContext.subjectId}
+          resources={data.resources}
+          subjects={data.subjects}
+          onBack={handleBackFromResources}
+          onCreateResource={handleCreateResource}
+          onDeleteResource={handleDeleteResource}
+          onRenameResource={handleRenameResource}
+        />
+      ) : activeView === 'revision' ? (
         <RevisionScreen
           chapters={data.chapters}
+          resources={data.resources}
           revisionTasks={data.revisionTasks}
           subjects={data.subjects}
           onBack={handleBackFromRevisionPlan}
           onDeleteRevisionTask={handleDeleteRevisionTask}
           onToggleRevisionTask={handleToggleRevisionTask}
+          onViewResources={handleOpenResources}
         />
       ) : activeView === 'today' ? (
         <TodayScreen
@@ -424,6 +530,7 @@ function App() {
           onToggleRevisionTask={handleToggleRevisionTask}
           onViewChapter={handleViewChapter}
           onViewExams={() => handleNavigate('exams')}
+          onViewResources={handleOpenResources}
           onViewRevisionPlan={handleOpenRevisionPlan}
         />
       ) : activeView === 'exams' ? (
@@ -454,6 +561,7 @@ function App() {
             (chapter) => chapter.subjectId === selectedSubject.id,
           )}
           chapterConfidences={data.chapterConfidences}
+          resources={data.resources}
           onBack={() => setSelectedSubjectId(null)}
           onClearChapterConfidence={handleClearChapterConfidence}
           onCreateChapter={handleCreateChapter}
@@ -461,6 +569,7 @@ function App() {
           onRenameChapter={handleRenameChapter}
           onScheduleRevision={handleCreateRevisionTask}
           onSetChapterConfidence={handleSetChapterConfidence}
+          onViewResources={handleOpenResources}
           onViewRevisionPlan={handleOpenRevisionPlan}
         />
       ) : (
@@ -471,6 +580,9 @@ function App() {
           onCreateSubject={handleCreateSubject}
           onDeleteSubject={handleDeleteSubject}
           onRenameSubject={handleRenameSubject}
+          onViewResources={(subjectId) =>
+            handleOpenResources(subjectId, null)
+          }
         />
       )}
     </main>

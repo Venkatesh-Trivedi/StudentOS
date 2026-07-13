@@ -31,6 +31,20 @@ export type RevisionTask = {
   updatedAt: string
 }
 
+export type ResourceType = 'link' | 'note'
+
+export type Resource = {
+  id: string
+  subjectId: string
+  chapterId: string | null
+  type: ResourceType
+  title: string
+  url: string | null
+  content: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type Homework = {
   id: string
   subjectId: string
@@ -67,7 +81,7 @@ export type Exam = {
 }
 
 export type StudentOSData = {
-  version: 5
+  version: 6
   subjects: Subject[]
   chapters: Chapter[]
   homework: Homework[]
@@ -75,4 +89,5 @@ export type StudentOSData = {
   exams: Exam[]
   chapterConfidences: ChapterConfidence[]
   revisionTasks: RevisionTask[]
+  resources: Resource[]
 }

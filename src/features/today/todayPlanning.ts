@@ -2,6 +2,7 @@ import type {
   Exam,
   ExamSubjectScope,
   Homework,
+  Resource,
   RevisionTask,
   StudentOSData,
 } from '../../types/studentOS'
@@ -25,6 +26,16 @@ export type TodayExamSeriesSummary = {
   title: string
 }
 
+export type TodayResourceSummary = {
+  id: string
+  subjectId: string
+  chapterId: string | null
+  type: 'link' | 'note'
+  title: string
+  url: string | null
+  content: string | null
+}
+
 export type TodayExamScopeSummary = {
   subject: TodaySubjectSummary
   scopeType: 'entire' | 'specific'
@@ -42,6 +53,7 @@ export type TodayHomeworkPlanItem = {
   dueDate: string
   subject: TodaySubjectSummary
   chapter: TodayChapterSummary | null
+  resources: TodayResourceSummary[]
   reason: string
   priorityScore: number
 }
@@ -53,6 +65,7 @@ export type TodayExamPlanItem = {
   examDate: string
   series: TodayExamSeriesSummary | null
   subjectScopes: TodayExamScopeSummary[]
+  resources: TodayResourceSummary[]
   reason: string
   priorityScore: number
 }
@@ -66,6 +79,7 @@ export type TodayScheduledRevisionPlanItem = {
   scheduledDate: string
   subject: TodaySubjectSummary
   chapter: TodayChapterSummary
+  resources: TodayResourceSummary[]
   reason: string
   priorityScore: number
 }
@@ -79,6 +93,7 @@ export type TodayConfidenceRevisionPlanItem = {
   scheduledDate: null
   subject: TodaySubjectSummary
   chapter: TodayChapterSummary
+  resources: TodayResourceSummary[]
   reason: string
   priorityScore: number
 }
@@ -146,7 +161,13 @@ export function createTodayPlan(
     }
 
     items.push(
-      createHomeworkPlanItem(homework, dayDifference, subjectNames, chapterNames),
+      createHomeworkPlanItem(
+        homework,
+        dayDifference,
+        subjectNames,
+        chapterNames,
+        data.resources,
+      ),
     )
   }
 
@@ -169,6 +190,7 @@ export function createTodayPlan(
         chapterNames,
         chapterIdsBySubject,
         seriesById,
+        data.resources,
       ),
     )
   }
@@ -213,6 +235,7 @@ export function createTodayPlan(
         dayDifference,
         chapter,
         subjectNames,
+        data.resources,
       ),
     )
     representedRevisionChapterIds.add(revisionTask.chapterId)
@@ -239,7 +262,13 @@ export function createTodayPlan(
       continue
     }
 
-    items.push(createConfidenceRevisionPlanItem(chapter, subjectNames))
+    items.push(
+      createConfidenceRevisionPlanItem(
+        chapter,
+        subjectNames,
+        data.resources,
+      ),
+    )
     representedRevisionChapterIds.add(chapter.id)
     recommendationCount += 1
   }
@@ -255,6 +284,7 @@ function createScheduledRevisionPlanItem(
   dayDifference: number,
   chapter: { id: string; subjectId: string; name: string },
   subjectNames: ReadonlyMap<string, string>,
+  resources: readonly Resource[],
 ): TodayScheduledRevisionPlanItem {
   return {
     type: 'revision',
@@ -268,6 +298,7 @@ function createScheduledRevisionPlanItem(
       id: chapter.id,
       name: chapter.name,
     },
+    resources: selectChapterResources(resources, chapter.id, chapter.subjectId),
     reason: getRevisionReason(dayDifference),
     priorityScore: getRevisionPriorityScore(dayDifference),
   }
@@ -276,6 +307,7 @@ function createScheduledRevisionPlanItem(
 function createConfidenceRevisionPlanItem(
   chapter: { id: string; subjectId: string; name: string },
   subjectNames: ReadonlyMap<string, string>,
+  resources: readonly Resource[],
 ): TodayConfidenceRevisionPlanItem {
   return {
     type: 'revision',
@@ -289,6 +321,7 @@ function createConfidenceRevisionPlanItem(
       id: chapter.id,
       name: chapter.name,
     },
+    resources: selectChapterResources(resources, chapter.id, chapter.subjectId),
     reason: 'Low confidence — worth revising',
     priorityScore: 12,
   }
@@ -299,6 +332,7 @@ function createHomeworkPlanItem(
   dayDifference: number,
   subjectNames: ReadonlyMap<string, string>,
   chapterNames: ReadonlyMap<string, string>,
+  resources: readonly Resource[],
 ): TodayHomeworkPlanItem {
   return {
     type: 'homework',
@@ -312,6 +346,7 @@ function createHomeworkPlanItem(
           name: chapterNames.get(homework.chapterId) ?? 'Unknown chapter',
         }
       : null,
+    resources: selectHomeworkResources(resources, homework),
     reason: getHomeworkReason(dayDifference),
     priorityScore: getHomeworkPriorityScore(dayDifference),
   }
@@ -324,6 +359,7 @@ function createExamPlanItem(
   chapterNames: ReadonlyMap<string, string>,
   chapterIdsBySubject: ReadonlyMap<string, ReadonlySet<string>>,
   seriesById: ReadonlyMap<string, { id: string; title: string }>,
+  resources: readonly Resource[],
 ): TodayExamPlanItem {
   const series = exam.seriesId ? seriesById.get(exam.seriesId) : undefined
 
@@ -346,8 +382,154 @@ function createExamPlanItem(
         chapterIdsBySubject,
       ),
     ),
+    resources: selectExamResources(resources, exam.subjectScopes),
     reason: getExamReason(dayDifference),
     priorityScore: getExamPriorityScore(dayDifference),
+  }
+}
+
+function selectHomeworkResources(
+  resources: readonly Resource[],
+  homework: Homework,
+): TodayResourceSummary[] {
+  if (!homework.chapterId) {
+    return []
+  }
+
+  const chapterResources = selectResources(
+    resources,
+    (resource) =>
+      resource.subjectId === homework.subjectId &&
+      resource.chapterId === homework.chapterId,
+    2,
+  )
+
+  if (chapterResources.length > 0) {
+    return chapterResources
+  }
+
+  return selectResources(
+    resources,
+    (resource) =>
+      resource.subjectId === homework.subjectId && resource.chapterId === null,
+    2,
+  )
+}
+
+function selectChapterResources(
+  resources: readonly Resource[],
+  chapterId: string,
+  subjectId: string,
+): TodayResourceSummary[] {
+  return selectResources(
+    resources,
+    (resource) =>
+      resource.subjectId === subjectId && resource.chapterId === chapterId,
+    2,
+  )
+}
+
+function selectExamResources(
+  resources: readonly Resource[],
+  subjectScopes: readonly ExamSubjectScope[],
+): TodayResourceSummary[] {
+  const subjectIds = new Set<string>()
+  const savedChapterIdsBySubject = new Map<string, Set<string>>()
+
+  for (const scope of subjectScopes) {
+    subjectIds.add(scope.subjectId)
+
+    const savedChapterIds = savedChapterIdsBySubject.get(scope.subjectId)
+
+    if (savedChapterIds) {
+      for (const chapterId of scope.chapterIds) {
+        savedChapterIds.add(chapterId)
+      }
+    } else {
+      savedChapterIdsBySubject.set(
+        scope.subjectId,
+        new Set(scope.chapterIds),
+      )
+    }
+  }
+
+  const selectedResources: TodayResourceSummary[] = []
+  const selectedResourceIds = new Set<string>()
+
+  addExamResources(
+    resources,
+    (resource) =>
+      resource.chapterId !== null &&
+      (savedChapterIdsBySubject
+        .get(resource.subjectId)
+        ?.has(resource.chapterId) ?? false),
+    selectedResources,
+    selectedResourceIds,
+  )
+  addExamResources(
+    resources,
+    (resource) =>
+      resource.chapterId === null && subjectIds.has(resource.subjectId),
+    selectedResources,
+    selectedResourceIds,
+  )
+
+  return selectedResources
+}
+
+function addExamResources(
+  resources: readonly Resource[],
+  isRelevant: (resource: Resource) => boolean,
+  selectedResources: TodayResourceSummary[],
+  selectedResourceIds: Set<string>,
+): void {
+  for (const resource of resources) {
+    if (selectedResources.length >= 3) {
+      return
+    }
+
+    if (!isRelevant(resource) || selectedResourceIds.has(resource.id)) {
+      continue
+    }
+
+    selectedResources.push(createResourceSummary(resource))
+    selectedResourceIds.add(resource.id)
+  }
+}
+
+function selectResources(
+  resources: readonly Resource[],
+  isRelevant: (resource: Resource) => boolean,
+  limit: number,
+): TodayResourceSummary[] {
+  const selectedResources: TodayResourceSummary[] = []
+  const selectedResourceIds = new Set<string>()
+
+  for (const resource of resources) {
+    if (selectedResources.length >= limit) {
+      break
+    }
+
+    if (!isRelevant(resource) || selectedResourceIds.has(resource.id)) {
+      continue
+    }
+
+    selectedResources.push(createResourceSummary(resource))
+    selectedResourceIds.add(resource.id)
+  }
+
+  return selectedResources
+}
+
+function createResourceSummary(resource: Resource): TodayResourceSummary {
+  return {
+    id: resource.id,
+    subjectId: resource.subjectId,
+    chapterId: resource.chapterId,
+    type: resource.type,
+    title: resource.title,
+    url: resource.url,
+    content: resource.content,
   }
 }
 

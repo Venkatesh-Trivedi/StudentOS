@@ -19,6 +19,7 @@ type SubjectsScreenProps = {
   onCreateSubject: (name: string) => string | null
   onRenameSubject: (subjectId: string, name: string) => string | null
   onDeleteSubject: (subjectId: string) => string | null
+  onViewResources: (subjectId: string) => void
 }
 
 export function SubjectsScreen({
@@ -28,6 +29,7 @@ export function SubjectsScreen({
   onCreateSubject,
   onRenameSubject,
   onDeleteSubject,
+  onViewResources,
 }: SubjectsScreenProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [name, setName] = useState('')
@@ -243,6 +245,14 @@ export function SubjectsScreen({
                     <span aria-hidden="true">Open</span>
                   </button>
                   <div className="row-actions">
+                    <button
+                      aria-label={`View resources for ${subject.name}`}
+                      className="button button-secondary button-compact"
+                      type="button"
+                      onClick={() => onViewResources(subject.id)}
+                    >
+                      Resources
+                    </button>
                     <button
                       aria-label={`Rename ${subject.name}`}
                       className="button button-secondary button-compact"

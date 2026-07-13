@@ -5,6 +5,7 @@ import type {
   Chapter,
   ChapterConfidence,
   ConfidenceLevel,
+  Resource,
   Subject,
 } from '../../types/studentOS'
 
@@ -20,6 +21,7 @@ export type ChapterScreenProps = {
   subject: Subject
   chapters: Chapter[]
   chapterConfidences: ChapterConfidence[]
+  resources: Resource[]
   onBack: () => void
   onCreateChapter: (name: string, subjectId: string) => string | null
   onRenameChapter: (chapterId: string, name: string) => string | null
@@ -34,6 +36,7 @@ export type ChapterScreenProps = {
     scheduledDate: string,
   ) => string | null
   onViewRevisionPlan: () => void
+  onViewResources: (subjectId: string, chapterId: string | null) => void
 }
 
 function getLocalDateKey(date: Date): string {
@@ -48,6 +51,7 @@ export function ChapterScreen({
   subject,
   chapters,
   chapterConfidences,
+  resources,
   onBack,
   onCreateChapter,
   onRenameChapter,
@@ -56,6 +60,7 @@ export function ChapterScreen({
   onClearChapterConfidence,
   onScheduleRevision,
   onViewRevisionPlan,
+  onViewResources,
 }: ChapterScreenProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [name, setName] = useState('')
@@ -201,6 +206,13 @@ export function ChapterScreen({
             <button
               className="button button-secondary"
               type="button"
+              onClick={() => onViewResources(subject.id, null)}
+            >
+              Resources
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
               onClick={onViewRevisionPlan}
             >
               View revision plan
@@ -256,6 +268,9 @@ export function ChapterScreen({
         <ol className="chapter-list">
           {chapters.map((chapter) => {
             const confidence = confidenceByChapterId.get(chapter.id)
+            const resourceCount = resources.filter(
+              (resource) => resource.chapterId === chapter.id,
+            ).length
             const confidenceLabel = confidence
               ? CONFIDENCE_LABELS[confidence.level]
               : 'Not set'
@@ -326,9 +341,23 @@ export function ChapterScreen({
                       >
                         Confidence: <strong>{confidenceLabel}</strong>
                       </p>
+                      <p className="chapter-resource-count">
+                        {resourceCount}{' '}
+                        {resourceCount === 1 ? 'resource' : 'resources'}
+                      </p>
                     </div>
 
                     <div className="row-actions chapter-item-actions">
+                      <button
+                        aria-label={`View resources for ${chapter.name}`}
+                        className="button button-secondary button-compact"
+                        type="button"
+                        onClick={() =>
+                          onViewResources(subject.id, chapter.id)
+                        }
+                      >
+                        Resources
+                      </button>
                       <button
                         aria-label={`Schedule revision for ${chapter.name}`}
                         className="button button-secondary button-compact"

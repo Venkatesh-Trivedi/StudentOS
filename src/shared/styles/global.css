@@ -42,7 +42,10 @@ button {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+summary:focus-visible {
   outline: 3px solid #f2a541;
   outline-offset: 3px;
 }
@@ -485,6 +488,13 @@ svg {
   font-weight: 700;
 }
 
+.chapter-resource-count {
+  margin: 5px 0 0;
+  color: #6d7977;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
 .chapter-confidence-low {
   color: #a43c3a;
 }
@@ -848,6 +858,12 @@ svg {
   font-weight: 800;
 }
 
+.today-screen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .today-plan-sections {
   display: grid;
   gap: 28px;
@@ -961,6 +977,79 @@ svg {
   margin-top: 14px;
 }
 
+.today-study-material {
+  margin-top: 14px;
+  border-top: 1px solid #e0e6e1;
+  padding-top: 12px;
+}
+
+.today-study-material-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.today-study-material-heading h4 {
+  margin: 0;
+  color: #405956;
+  font-size: 0.82rem;
+}
+
+.today-study-material > ul {
+  display: grid;
+  gap: 7px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.today-resource-link,
+.today-resource-note {
+  min-width: 0;
+  border-radius: 9px;
+  padding: 8px 9px;
+  color: #2b5f5a;
+  background: #f1f6f1;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.today-resource-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 750;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.today-resource-link small {
+  min-width: 0;
+  color: #71807c;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.today-resource-link span {
+  min-width: 0;
+}
+
+.today-resource-note summary {
+  color: #2b5f5a;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.today-resource-note p {
+  margin: 8px 0 0;
+  color: #596b68;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .today-empty-state h2 {
   margin: 0;
   color: #17343c;
@@ -1069,7 +1158,270 @@ svg {
 }
 
 .revision-task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
   grid-area: actions;
+}
+
+.resource-form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.resource-type-fieldset {
+  margin: 0 0 16px;
+  border: 0;
+  padding: 0;
+}
+
+.resource-type-fieldset legend,
+.resource-filter-heading h2 {
+  color: #405956;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.resource-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  margin-top: 8px;
+}
+
+.resource-type-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.resource-type-options input {
+  width: 18px;
+  height: 18px;
+  accent-color: #176c67;
+}
+
+.resource-form-field,
+.resource-filter-field {
+  min-width: 0;
+}
+
+.resource-form-field label,
+.resource-filter-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: #405956;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.resource-form-field input,
+.resource-form-field select,
+.resource-form-field textarea,
+.resource-filter-field select,
+.resource-rename-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #b9c6c0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #20343a;
+  background: #fff;
+}
+
+.resource-form-field textarea {
+  min-height: 132px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.resource-form-field select:disabled,
+.resource-filter-field select:disabled {
+  color: #798480;
+  background: #f1f2ee;
+  cursor: not-allowed;
+}
+
+.resource-form-actions,
+.resource-rename-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.resource-filters {
+  margin: 0 0 24px;
+  border: 1px solid #dce3de;
+  border-radius: 16px;
+  padding: 14px;
+  background: rgb(255 254 250 / 70%);
+}
+
+.resource-filter-heading,
+.resource-group-heading,
+.resource-title-row,
+.resource-link-details {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resource-filter-heading h2 {
+  margin: 0;
+}
+
+.resource-filter-fields {
+  display: grid;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.resources-empty-state h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.1rem;
+}
+
+.resource-groups {
+  display: grid;
+  gap: 26px;
+}
+
+.resource-group-heading {
+  margin-bottom: 10px;
+}
+
+.resource-group-heading h2 {
+  margin: 0;
+  color: #17343c;
+  font-size: 1.08rem;
+}
+
+.resource-group-heading > span {
+  color: #71807c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.resource-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resource-card {
+  display: grid;
+  min-width: 0;
+  gap: 13px;
+  border: 1px solid #d9dfda;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fffefa;
+  box-shadow: 0 4px 14px rgb(39 66 67 / 5%);
+}
+
+.resource-card-content {
+  min-width: 0;
+}
+
+.resource-title-row h3 {
+  min-width: 0;
+  margin: 0;
+  color: #17343c;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.resource-type-label {
+  flex: 0 0 auto;
+  border: 1px solid #cadbd2;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #21635e;
+  background: #eef6f0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.resource-card-meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 7px 0 0;
+  color: #596b68;
+  font-size: 0.8rem;
+}
+
+.resource-card-meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.resource-link-details {
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.resource-hostname {
+  min-width: 0;
+  color: #697975;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.resource-note-content {
+  margin-top: 12px;
+  border-radius: 11px;
+  padding: 11px;
+  background: #f3f6f1;
+}
+
+.resource-note-preview,
+.resource-note-full {
+  margin: 0;
+  color: #465b59;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.resource-note-content details {
+  margin-top: 9px;
+}
+
+.resource-note-content summary {
+  color: #21635e;
+  font-size: 0.8rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.resource-note-full {
+  margin-top: 9px;
+}
+
+.resource-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.resource-rename-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #405956;
+  font-size: 0.8rem;
+  font-weight: 750;
 }
 
 .revision-task-card-completed {
@@ -1535,6 +1887,25 @@ svg {
     grid-template-areas: 'completion content actions';
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: start;
+  }
+
+  .resource-form-grid,
+  .resource-filter-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .resource-title-field,
+  .resource-value-field {
+    grid-column: 1 / -1;
+  }
+
+  .resource-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .resource-card-actions {
+    justify-content: flex-end;
   }
 
   .exam-form-grid {

@@ -5,12 +5,17 @@ import type {
   ExamSeries,
   ExamSubjectScope,
   Homework,
+  Resource,
   RevisionTask,
   StudentOSData,
   Subject,
 } from '../types/studentOS'
 
 export const STUDENT_OS_STORAGE_KEY = 'studentos:data'
+
+const RESOURCE_TITLE_MAX_LENGTH = 100
+const RESOURCE_URL_MAX_LENGTH = 2048
+const RESOURCE_CONTENT_MAX_LENGTH = 5000
 
 export type StudentOSStorageReader = {
   getItem(key: string): string | null
@@ -41,7 +46,7 @@ export type StudentOSDataSaveResult =
 
 export function createEmptyStudentOSData(): StudentOSData {
   return {
-    version: 5,
+    version: 6,
     subjects: [],
     chapters: [],
     homework: [],
@@ -49,6 +54,7 @@ export function createEmptyStudentOSData(): StudentOSData {
     exams: [],
     chapterConfidences: [],
     revisionTasks: [],
+    resources: [],
   }
 }
 
@@ -97,36 +103,48 @@ export function loadStudentOSData(
     const version2Data = migrateStudentOSDataVersion1(parsedData)
     const version3Data = migrateStudentOSDataVersion2(version2Data)
     const version4Data = migrateStudentOSDataVersion3(version3Data)
+    const version5Data = migrateStudentOSDataVersion4(version4Data)
 
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion4(version4Data),
+      data: migrateStudentOSDataVersion5(version5Data),
     }
   }
 
   if (isStudentOSDataVersion2(parsedData)) {
     const version3Data = migrateStudentOSDataVersion2(parsedData)
     const version4Data = migrateStudentOSDataVersion3(version3Data)
+    const version5Data = migrateStudentOSDataVersion4(version4Data)
 
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion4(version4Data),
+      data: migrateStudentOSDataVersion5(version5Data),
     }
   }
 
   if (isStudentOSDataVersion3(parsedData)) {
+    const version4Data = migrateStudentOSDataVersion3(parsedData)
+    const version5Data = migrateStudentOSDataVersion4(version4Data)
+
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion4(
-        migrateStudentOSDataVersion3(parsedData),
-      ),
+      data: migrateStudentOSDataVersion5(version5Data),
     }
   }
 
   if (isStudentOSDataVersion4(parsedData)) {
     return {
       isSuccess: true,
-      data: migrateStudentOSDataVersion4(parsedData),
+      data: migrateStudentOSDataVersion5(
+        migrateStudentOSDataVersion4(parsedData),
+      ),
+    }
+  }
+
+  if (isStudentOSDataVersion5(parsedData)) {
+    return {
+      isSuccess: true,
+      data: migrateStudentOSDataVersion5(parsedData),
     }
   }
 
@@ -144,7 +162,8 @@ export function loadStudentOSData(
     parsedData.version !== 2 &&
     parsedData.version !== 3 &&
     parsedData.version !== 4 &&
-    parsedData.version !== 5
+    parsedData.version !== 5 &&
+    parsedData.version !== 6
   ) {
     return {
       isSuccess: false,
@@ -203,7 +222,7 @@ function getDefaultStorage(): Storage | null {
 function isStudentOSData(value: unknown): value is StudentOSData {
   return (
     isRecord(value) &&
-    value.version === 5 &&
+    value.version === 6 &&
     Array.isArray(value.subjects) &&
     value.subjects.every(isSubject) &&
     Array.isArray(value.chapters) &&
@@ -218,7 +237,9 @@ function isStudentOSData(value: unknown): value is StudentOSData {
     value.chapterConfidences.every(isChapterConfidence) &&
     hasUniqueChapterConfidences(value.chapterConfidences) &&
     Array.isArray(value.revisionTasks) &&
-    value.revisionTasks.every(isRevisionTask)
+    value.revisionTasks.every(isRevisionTask) &&
+    Array.isArray(value.resources) &&
+    value.resources.every(isResource)
   )
 }
 
@@ -266,6 +287,17 @@ type StudentOSDataVersion4 = {
   homework: Homework[]
   examSeries: ExamSeries[]
   exams: Exam[]
+}
+
+type StudentOSDataVersion5 = {
+  version: 5
+  subjects: Subject[]
+  chapters: Chapter[]
+  homework: Homework[]
+  examSeries: ExamSeries[]
+  exams: Exam[]
+  chapterConfidences: ChapterConfidence[]
+  revisionTasks: RevisionTask[]
 }
 
 function isStudentOSDataVersion1(
@@ -385,7 +417,7 @@ function isStudentOSDataVersion4(
 
 function migrateStudentOSDataVersion4(
   data: StudentOSDataVersion4,
-): StudentOSData {
+): StudentOSDataVersion5 {
   return {
     version: 5,
     subjects: [...data.subjects],
@@ -395,6 +427,46 @@ function migrateStudentOSDataVersion4(
     exams: [...data.exams],
     chapterConfidences: [],
     revisionTasks: [],
+  }
+}
+
+function isStudentOSDataVersion5(
+  value: unknown,
+): value is StudentOSDataVersion5 {
+  return (
+    isRecord(value) &&
+    value.version === 5 &&
+    Array.isArray(value.subjects) &&
+    value.subjects.every(isSubject) &&
+    Array.isArray(value.chapters) &&
+    value.chapters.every(isChapter) &&
+    Array.isArray(value.homework) &&
+    value.homework.every(isHomework) &&
+    Array.isArray(value.examSeries) &&
+    value.examSeries.every(isExamSeries) &&
+    Array.isArray(value.exams) &&
+    value.exams.every(isExam) &&
+    Array.isArray(value.chapterConfidences) &&
+    value.chapterConfidences.every(isChapterConfidence) &&
+    hasUniqueChapterConfidences(value.chapterConfidences) &&
+    Array.isArray(value.revisionTasks) &&
+    value.revisionTasks.every(isRevisionTask)
+  )
+}
+
+function migrateStudentOSDataVersion5(
+  data: StudentOSDataVersion5,
+): StudentOSData {
+  return {
+    version: 6,
+    subjects: [...data.subjects],
+    chapters: [...data.chapters],
+    homework: [...data.homework],
+    examSeries: [...data.examSeries],
+    exams: [...data.exams],
+    chapterConfidences: [...data.chapterConfidences],
+    revisionTasks: [...data.revisionTasks],
+    resources: [],
   }
 }
 
@@ -448,6 +520,68 @@ function isRevisionTask(value: unknown): value is RevisionTask {
     (isString(value.completedAt) || value.completedAt === null) &&
     isString(value.createdAt) &&
     isString(value.updatedAt)
+  )
+}
+
+function isResource(value: unknown): value is Resource {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.subjectId) &&
+    (isString(value.chapterId) || value.chapterId === null) &&
+    isValidStoredResourceTitle(value.title) &&
+    isString(value.createdAt) &&
+    isString(value.updatedAt) &&
+    ((value.type === 'link' &&
+      isValidStoredResourceUrl(value.url) &&
+      value.content === null) ||
+      (value.type === 'note' &&
+        value.url === null &&
+        isValidStoredResourceContent(value.content)))
+  )
+}
+
+function isValidStoredResourceTitle(value: unknown): value is string {
+  if (!isString(value)) {
+    return false
+  }
+
+  const normalizedTitle = value.trim().replace(/\s+/g, ' ')
+
+  return (
+    normalizedTitle.length > 0 &&
+    value.length <= RESOURCE_TITLE_MAX_LENGTH
+  )
+}
+
+function isValidStoredResourceUrl(value: unknown): value is string {
+  if (!isString(value)) {
+    return false
+  }
+
+  const normalizedUrl = value.trim()
+
+  if (
+    normalizedUrl.length === 0 ||
+    value.length > RESOURCE_URL_MAX_LENGTH
+  ) {
+    return false
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedUrl)
+
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function isValidStoredResourceContent(value: unknown): value is string {
+  return (
+    isString(value) &&
+    value.trim().length > 0 &&
+    value.length <= RESOURCE_CONTENT_MAX_LENGTH
   )
 }
 

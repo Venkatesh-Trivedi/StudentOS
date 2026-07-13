@@ -5,6 +5,7 @@ import {
   createTodayPlan,
   type TodayExamPlanItem,
   type TodayPlanItem,
+  type TodayResourceSummary,
   type TodayRevisionPlanItem,
 } from './todayPlanning'
 
@@ -15,6 +16,10 @@ export type TodayScreenProps = {
   onViewChapter: (subjectId: string) => void
   onViewExams: () => void
   onViewRevisionPlan: () => void
+  onViewResources: (
+    subjectId: string | null,
+    chapterId: string | null,
+  ) => void
 }
 
 type TodayPlanListProps = {
@@ -24,6 +29,10 @@ type TodayPlanListProps = {
   onToggleRevisionTask: (revisionTaskId: string) => void
   onViewChapter: (subjectId: string) => void
   onViewExams: () => void
+  onViewResources: (
+    subjectId: string | null,
+    chapterId: string | null,
+  ) => void
 }
 
 function formatLocalDate(dateKey: string): string {
@@ -56,6 +65,7 @@ function TodayPlanList({
   onToggleRevisionTask,
   onViewChapter,
   onViewExams,
+  onViewResources,
 }: TodayPlanListProps) {
   return (
     <ul className="today-plan-list">
@@ -68,6 +78,7 @@ function TodayPlanList({
             onToggleRevisionTask={onToggleRevisionTask}
             onViewChapter={onViewChapter}
             onViewExams={onViewExams}
+            onViewResources={onViewResources}
           />
         </li>
       ))}
@@ -82,6 +93,10 @@ type TodayPlanItemCardProps = {
   onToggleRevisionTask: (revisionTaskId: string) => void
   onViewChapter: (subjectId: string) => void
   onViewExams: () => void
+  onViewResources: (
+    subjectId: string | null,
+    chapterId: string | null,
+  ) => void
 }
 
 function TodayPlanItemCard({
@@ -91,6 +106,7 @@ function TodayPlanItemCard({
   onToggleRevisionTask,
   onViewChapter,
   onViewExams,
+  onViewResources,
 }: TodayPlanItemCardProps) {
   const className = `today-plan-item${isStartHere ? ' today-plan-item-featured' : ''}`
 
@@ -128,6 +144,19 @@ function TodayPlanItemCard({
             {formatLocalDate(item.dueDate)}
           </time>
         </p>
+        <StudyMaterial
+          resources={item.resources}
+          onViewResources={() =>
+            onViewResources(
+              item.subject.id,
+              item.resources.some(
+                (resource) => resource.chapterId === item.chapter?.id,
+              )
+                ? item.chapter?.id ?? null
+                : null,
+            )
+          }
+        />
       </article>
     )
   }
@@ -138,6 +167,7 @@ function TodayPlanItemCard({
         className={className}
         item={item}
         onViewExams={onViewExams}
+        onViewResources={onViewResources}
       />
     )
   }
@@ -148,6 +178,7 @@ function TodayPlanItemCard({
       item={item}
       onToggleRevisionTask={onToggleRevisionTask}
       onViewChapter={onViewChapter}
+      onViewResources={onViewResources}
     />
   )
 }
@@ -156,12 +187,17 @@ type TodayExamPlanItemCardProps = {
   className: string
   item: TodayExamPlanItem
   onViewExams: () => void
+  onViewResources: (
+    subjectId: string | null,
+    chapterId: string | null,
+  ) => void
 }
 
 function TodayExamPlanItemCard({
   className,
   item,
   onViewExams,
+  onViewResources,
 }: TodayExamPlanItemCardProps) {
   return (
     <article className={className}>
@@ -206,6 +242,10 @@ function TodayExamPlanItemCard({
           </li>
         ))}
       </ul>
+      <StudyMaterial
+        resources={item.resources}
+        onViewResources={() => onViewResources(null, null)}
+      />
     </article>
   )
 }
@@ -215,6 +255,10 @@ type TodayRevisionPlanItemCardProps = {
   item: TodayRevisionPlanItem
   onToggleRevisionTask: (revisionTaskId: string) => void
   onViewChapter: (subjectId: string) => void
+  onViewResources: (
+    subjectId: string | null,
+    chapterId: string | null,
+  ) => void
 }
 
 function TodayRevisionPlanItemCard({
@@ -222,6 +266,7 @@ function TodayRevisionPlanItemCard({
   item,
   onToggleRevisionTask,
   onViewChapter,
+  onViewResources,
 }: TodayRevisionPlanItemCardProps) {
   const isScheduled = item.revisionKind === 'scheduled'
 
@@ -269,7 +314,80 @@ function TodayRevisionPlanItemCard({
           </time>
         </p>
       ) : null}
+      <StudyMaterial
+        resources={item.resources}
+        onViewResources={() =>
+          onViewResources(item.subject.id, item.chapter.id)
+        }
+      />
     </article>
+  )
+}
+
+type StudyMaterialProps = {
+  resources: TodayResourceSummary[]
+  onViewResources: () => void
+}
+
+function getResourceHostname(url: string | null): string | null {
+  if (!url) {
+    return null
+  }
+
+  try {
+    return new URL(url).hostname
+  } catch {
+    return null
+  }
+}
+
+function StudyMaterial({
+  resources,
+  onViewResources,
+}: StudyMaterialProps) {
+  if (resources.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="today-study-material" aria-label="Study material">
+      <div className="today-study-material-heading">
+        <h4>Study material</h4>
+        <button
+          className="button button-secondary button-compact"
+          type="button"
+          onClick={onViewResources}
+        >
+          View resources
+        </button>
+      </div>
+      <ul>
+        {resources.map((resource) => {
+          const hostname = getResourceHostname(resource.url)
+
+          return (
+            <li key={resource.id}>
+              {resource.type === 'link' && resource.url ? (
+                <a
+                  className="today-resource-link"
+                  href={resource.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <span>{resource.title}</span>
+                  {hostname ? <small>{hostname}</small> : null}
+                </a>
+              ) : (
+                <details className="today-resource-note">
+                  <summary>{resource.title}</summary>
+                  <p>{resource.content}</p>
+                </details>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
 
@@ -280,6 +398,7 @@ export function TodayScreen({
   onViewChapter,
   onViewExams,
   onViewRevisionPlan,
+  onViewResources,
 }: TodayScreenProps) {
   const [actionError, setActionError] = useState<string | null>(null)
   const currentDate = new Date()
@@ -308,13 +427,22 @@ export function TodayScreen({
             </time>
             <p>Here’s what needs your attention.</p>
           </div>
-          <button
-            className="button button-secondary"
-            type="button"
-            onClick={onViewRevisionPlan}
-          >
-            Revision plan
-          </button>
+          <div className="today-screen-actions">
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={() => onViewResources(null, null)}
+            >
+              Resources
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={onViewRevisionPlan}
+            >
+              Revision plan
+            </button>
+          </div>
         </div>
       </header>
 
@@ -334,6 +462,7 @@ export function TodayScreen({
               onToggleRevisionTask={handleToggleRevisionTask}
               onViewChapter={onViewChapter}
               onViewExams={onViewExams}
+              onViewResources={onViewResources}
             />
           </section>
 
@@ -351,6 +480,7 @@ export function TodayScreen({
                 onToggleRevisionTask={handleToggleRevisionTask}
                 onViewChapter={onViewChapter}
                 onViewExams={onViewExams}
+                onViewResources={onViewResources}
               />
             </section>
           ) : null}
@@ -369,6 +499,7 @@ export function TodayScreen({
                 onToggleRevisionTask={handleToggleRevisionTask}
                 onViewChapter={onViewChapter}
                 onViewExams={onViewExams}
+                onViewResources={onViewResources}
               />
             </section>
           ) : null}

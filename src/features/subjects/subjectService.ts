@@ -124,6 +124,9 @@ export function deleteSubject(
       revisionTasks: data.revisionTasks.filter(
         (revisionTask) => !chapterIdsToDelete.has(revisionTask.chapterId),
       ),
+      resources: data.resources.filter(
+        (resource) => resource.subjectId !== subjectId,
+      ),
     },
   }
 }

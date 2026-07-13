@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog'
 import type {
   Chapter,
+  Resource,
   RevisionTask,
   Subject,
 } from '../../types/studentOS'
@@ -12,9 +13,11 @@ export type RevisionScreenProps = {
   revisionTasks: RevisionTask[]
   chapters: Chapter[]
   subjects: Subject[]
+  resources: Resource[]
   onBack: () => void
   onToggleRevisionTask: (revisionTaskId: string) => string | null
   onDeleteRevisionTask: (revisionTaskId: string) => string | null
+  onViewResources: (subjectId: string, chapterId: string | null) => void
 }
 
 type RevisionTaskGroup = {
@@ -142,9 +145,11 @@ export function RevisionScreen({
   revisionTasks,
   chapters,
   subjects,
+  resources,
   onBack,
   onToggleRevisionTask,
   onDeleteRevisionTask,
+  onViewResources,
 }: RevisionScreenProps) {
   const [actionError, setActionError] = useState<string | null>(null)
   const [revisionTaskToDelete, setRevisionTaskToDelete] =
@@ -226,6 +231,16 @@ export function RevisionScreen({
                     const subjectName = chapter
                       ? subjectNames.get(chapter.subjectId) ?? 'Unknown subject'
                       : 'Unknown subject'
+                    const hasChapterResources = resources.some(
+                      (resource) => resource.chapterId === chapter?.id,
+                    )
+                    const hasSubjectResources = chapter
+                      ? resources.some(
+                          (resource) =>
+                            resource.subjectId === chapter.subjectId &&
+                            resource.chapterId === null,
+                        )
+                      : false
 
                     return (
                       <li
@@ -268,6 +283,22 @@ export function RevisionScreen({
                         </div>
 
                         <div className="revision-task-actions">
+                          {chapter &&
+                          (hasChapterResources || hasSubjectResources) ? (
+                            <button
+                              aria-label={`View resources for ${chapterName}`}
+                              className="button button-secondary button-compact"
+                              type="button"
+                              onClick={() =>
+                                onViewResources(
+                                  chapter.subjectId,
+                                  hasChapterResources ? chapter.id : null,
+                                )
+                              }
+                            >
+                              View resources
+                            </button>
+                          ) : null}
                           <button
                             aria-label={`Delete revision for ${chapterName}`}
                             className="button button-danger button-compact"
