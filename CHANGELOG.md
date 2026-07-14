@@ -18,6 +18,10 @@
 - Chapter confidence and scheduled revision tasks
 - Subject- and chapter-linked website and note resources
 - Manual local JSON backup export and import with shared validation, migration, preview, and replacement confirmation
+- Installable PWA support with generated app icons and a standalone display manifest
+- Offline app-shell caching after a successful production load, without caching external Resource websites
+- Accessible offline-ready and update-available messages with student-controlled update activation
+- Conditional browser installation action and iPhone/iPad Add to Home Screen guidance
 
 ## Legacy desktop prototype
 

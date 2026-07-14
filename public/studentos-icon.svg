@@ -1,0 +1,30 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">StudentOS</title>
+  <desc id="description">An open study book on a teal background</desc>
+  <rect width="512" height="512" fill="#176c67" />
+  <circle cx="256" cy="132" r="36" fill="#f2a541" />
+  <path
+    d="M104 174c0-18 15-32 32-32h64c24 0 45 10 56 27 11-17 32-27 56-27h64c17 0 32 14 32 32v190c0 18-15 32-32 32h-70c-19 0-37 7-50 21-13-14-31-21-50-21h-70c-17 0-32-14-32-32V174Z"
+    fill="#fffefa"
+  />
+  <path
+    d="M256 183v217M136 190h62c20 0 38 8 50 22M376 190h-62c-20 0-38 8-50 22"
+    fill="none"
+    stroke="#176c67"
+    stroke-linecap="round"
+    stroke-width="18"
+  />
+  <path
+    d="m160 292 30 30 62-70"
+    fill="none"
+    stroke="#f2a541"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="22"
+  />
+</svg>

@@ -23,6 +23,7 @@ html {
 body {
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background:
     linear-gradient(145deg, rgb(255 255 255 / 60%), transparent 48%),
@@ -58,21 +59,27 @@ svg {
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-shell {
   width: min(100%, 720px);
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
-  padding: 24px 16px 104px;
+  padding:
+    max(24px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    calc(104px + env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
 }
 
 .app-navigation {
   position: fixed;
   z-index: 5;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
   display: grid;
   width: auto;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -688,6 +695,48 @@ svg {
 
 .confirm-dialog-actions .button {
   width: 100%;
+}
+
+.pwa-status {
+  position: fixed;
+  z-index: 8;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  display: grid;
+  width: auto;
+  max-width: 440px;
+  gap: 12px;
+  margin-inline: auto;
+  border: 1px solid #bcd3ca;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fffefa;
+  box-shadow: 0 12px 32px rgb(19 52 60 / 20%);
+}
+
+.pwa-status-content p {
+  margin: 0;
+  color: #294846;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.pwa-status-content .pwa-status-error {
+  margin-top: 5px;
+  color: #9a3637;
+  font-size: 0.82rem;
+}
+
+.pwa-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pwa-status-actions .button {
+  flex: 1 1 auto;
 }
 
 .homework-form-grid {
@@ -1980,7 +2029,11 @@ svg {
 
 @media (min-width: 560px) {
   .app-shell {
-    padding: 40px 28px 56px;
+    padding:
+      max(40px, env(safe-area-inset-top, 0px))
+      max(28px, env(safe-area-inset-right, 0px))
+      max(56px, env(safe-area-inset-bottom, 0px))
+      max(28px, env(safe-area-inset-left, 0px));
   }
 
   .app-navigation {
@@ -1996,6 +2049,18 @@ svg {
     min-height: 38px;
     padding: 7px 13px;
     font-size: 0.88rem;
+  }
+
+  .pwa-status {
+    right: max(24px, env(safe-area-inset-right, 0px));
+    bottom: max(24px, env(safe-area-inset-bottom, 0px));
+    left: max(24px, env(safe-area-inset-left, 0px));
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .pwa-status-actions .button {
+    flex: 0 0 auto;
   }
 
   .form-actions {

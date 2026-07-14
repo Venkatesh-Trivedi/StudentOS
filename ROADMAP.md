@@ -18,15 +18,13 @@ The direction remains:
 - Chapter confidence and scheduled revision tasks
 - Website links and notes connected to subjects and chapters
 - Manual local JSON export and import with validation, migration, preview, and confirmation
+- Installable PWA shell with offline availability and an explicit update prompt
 
-## Next major reliability milestone
-
-PWA support is the next major reliability milestone. The goal is to make StudentOS more dependable to install and use on students’ own devices while preserving its local-first design.
-
-## Later priorities
+## Next priorities
 
 - Continue refining Today recommendations and the core study-planning workflow
-- Consider optional cloud sync later, without making an account mandatory for local use
+- Improve local-first reliability and backup guidance as real-device use grows
+- Consider optional cloud sync as a later milestone, without making an account mandatory for local use
 - Consider AI only after the non-AI workflow is useful and dependable
 
 ## Product focus

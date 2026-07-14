@@ -49,11 +49,26 @@ StudentOS is in active development and is not yet a public release.
 - Preview and confirm a JSON restore before it replaces the data currently stored in StudentOS
 - Preserve current data if an imported backup is invalid or cannot be saved
 
+### Installable and offline
+
+- Install StudentOS from supported phone and desktop browsers
+- Open the installed app in a standalone window
+- Keep the complete StudentOS app shell available offline after one successful online production load
+- Choose when to activate a newly deployed version instead of being interrupted by a silent reload
+
 ## Data and privacy
 
 StudentOS currently stores all data in the browser under one versioned local-storage record. Data remains specific to the browser and device where the app is used.
 
 Backups are manual and local: StudentOS downloads a JSON file to the device, and a selected backup is read in the browser when restored. Backup data is not uploaded to a server. There are still no accounts, automatic backups, or cloud sync.
+
+Installing StudentOS does not move data to a server. Data still belongs to the browser, profile, and device where it was created, so manual JSON backups remain important. Local planning, editing, export, and import continue to work offline. External Resource links remain normal website links and require an internet connection.
+
+## Installing StudentOS
+
+After StudentOS has loaded successfully from a production or HTTPS deployment, supported browsers may offer installation. When the browser exposes its install prompt, StudentOS shows an **Install StudentOS** action on the Data & backup screen.
+
+On iPhone and iPad, use the browser Share menu and choose **Add to Home Screen**. Installation support and wording vary by browser and device.
 
 ## Development
 
@@ -64,6 +79,19 @@ From the repository root:
     npm run build
     npm run lint
 
+When the source app icon changes, regenerate the committed PWA assets with:
+
+    npm run generate-pwa-assets
+
+### Production PWA testing
+
+Service-worker and installation behaviour should be tested against a production build, not the normal development server:
+
+    npm run build
+    npm run preview -- --host
+
+Open the preview once while online, wait for the offline-ready message, and then test a reload with the browser offline. `localhost` is suitable for desktop testing. Installation and service workers on another device generally require a deployed HTTPS URL because a plain local-network HTTP address is not a secure browser context.
+
 ## Tech stack
 
 - React
@@ -71,6 +99,7 @@ From the repository root:
 - Vite
 - CSS
 - Browser `localStorage`, Blob, and File APIs
+- Vite PWA and Workbox tooling
 - Oxlint
 
 ## Project structure

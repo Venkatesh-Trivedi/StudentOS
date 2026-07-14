@@ -1,4 +1,9 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import {
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ChangeEvent,
+} from 'react'
 
 import {
   downloadStudentOSBackup,
@@ -24,6 +29,49 @@ type BackupFeedback = {
   message: string
 }
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed'
+    platform: string
+  }>
+}
+
+let availableInstallPrompt: BeforeInstallPromptEvent | null = null
+const installPromptListeners = new Set<() => void>()
+
+function notifyInstallPromptListeners() {
+  for (const listener of installPromptListeners) {
+    listener()
+  }
+}
+
+function setAvailableInstallPrompt(prompt: BeforeInstallPromptEvent | null) {
+  availableInstallPrompt = prompt
+  notifyInstallPromptListeners()
+}
+
+function subscribeToInstallPrompt(listener: () => void): () => void {
+  installPromptListeners.add(listener)
+
+  return () => installPromptListeners.delete(listener)
+}
+
+function getAvailableInstallPrompt(): BeforeInstallPromptEvent | null {
+  return availableInstallPrompt
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault()
+    setAvailableInstallPrompt(event as BeforeInstallPromptEvent)
+  })
+
+  window.addEventListener('appinstalled', () => {
+    setAvailableInstallPrompt(null)
+  })
+}
+
 function formatExportDate(exportedAt: string): string {
   const date = new Date(exportedAt)
 
@@ -44,6 +92,11 @@ export function DataBackupScreen({
 }: DataBackupScreenProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const parseRequestRef = useRef(0)
+  const installPrompt = useSyncExternalStore(
+    subscribeToInstallPrompt,
+    getAvailableInstallPrompt,
+    () => null,
+  )
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null)
   const [isParsing, setIsParsing] = useState(false)
   const [isConfirmingImport, setIsConfirmingImport] = useState(false)
@@ -73,6 +126,26 @@ export function DataBackupScreen({
       kind: 'success',
       message: `Backup downloaded as ${result.filename}.`,
     })
+  }
+
+  async function handleInstall() {
+    if (!installPrompt) {
+      return
+    }
+
+    setFeedback(null)
+    setAvailableInstallPrompt(null)
+
+    try {
+      await installPrompt.prompt()
+      await installPrompt.userChoice
+    } catch {
+      setFeedback({
+        kind: 'error',
+        message:
+          'StudentOS could not open the install prompt. Try your browser install menu instead.',
+      })
+    }
   }
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -153,6 +226,34 @@ export function DataBackupScreen({
           device. Download a backup if you want a copy you can restore later.
         </p>
       </header>
+
+      <section
+        className="data-backup-section"
+        aria-labelledby="install-studentos-heading"
+      >
+        <div className="data-backup-section-heading">
+          <div>
+            <h2 id="install-studentos-heading">Install StudentOS</h2>
+            <p>
+              Supported browsers can add StudentOS to your device for quicker
+              access in its own app window.
+            </p>
+          </div>
+          {installPrompt ? (
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={() => void handleInstall()}
+            >
+              Install StudentOS
+            </button>
+          ) : null}
+        </div>
+        <p className="field-help">
+          On iPhone or iPad, use the browser Share menu, then choose Add to Home
+          Screen. Installation options vary by browser and device.
+        </p>
+      </section>
 
       <section
         className="data-backup-section"

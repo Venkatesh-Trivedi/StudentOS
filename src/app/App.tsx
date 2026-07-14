@@ -52,6 +52,7 @@ import {
 } from '../features/subjects/subjectService'
 import { SubjectsScreen } from '../features/subjects/SubjectsScreen'
 import { TodayScreen } from '../features/today/TodayScreen'
+import { PWAStatus } from '../shared/components/PWAStatus'
 import type { ConfidenceLevel, StudentOSData } from '../types/studentOS'
 
 type AppStartupState = {
@@ -511,6 +512,8 @@ function App() {
           Exams
         </button>
       </nav>
+
+      <PWAStatus />
 
       {storageError ? (
         <div className="storage-alert" role="alert">
